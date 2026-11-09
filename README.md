@@ -47,9 +47,11 @@ Título e descrição de cada página ficam no `<head>` da própria página.
 3. Adicione o card em `blog.html` com `data-category` = `Maintenance`, `Guides` ou `Design Ideas`.
 4. Rode `python tools/build.py`.
 
-## Netlify — passos manuais
+## Netlify
 
-- **Forms**: em *Site configuration → Forms*, ative *Form detection* e configure a notificação
-  por e-mail. Sem isso, o botão "Send My Quote Request" mostra erro e orienta o cliente a usar o WhatsApp.
-- **Domínio**: ao conectar um domínio, atualize `SITE_URL` e rode o build.
-- Recomendo ligar o site a um repositório Git (GitHub) para deploy automático e histórico.
+- O site `alefloors` está ligado a este repositório (github.com/rafabordinhon/ALEFLOORS).
+  **Todo push na branch `main` publica automaticamente.** Não há comando de build; a pasta publicada é a raiz.
+- Para voltar a uma versão anterior: painel do Netlify → *Deploys* → escolha o deploy → *Publish deploy*.
+- **Formulários**: a detecção está ativada e os pedidos aparecem em *Forms → quote*.
+  Configure o aviso por e-mail em *Site configuration → Notifications → Emails and webhooks*.
+- **Domínio**: ao conectar um domínio, atualize `SITE_URL` em `tools/build.py` e rode o build.
