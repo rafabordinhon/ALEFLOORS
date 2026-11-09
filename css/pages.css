@@ -1,0 +1,444 @@
+/* ==========================================================================
+   Inner pages (services, about, contact, blog, posts, legal, 404, thank you)
+   Loaded after css/base.css and before the page's own css/<page>.css.
+
+   1. The page stylesheets were written for the old design and use its variable
+      names; they are mapped here to the new palette, so they follow it.
+   2. Shared inner-page pieces: dark page header, section titles, CTA band,
+      legal pages, simple pages and the scroll animation.
+   ========================================================================== */
+
+:root {
+    --primary-color: var(--graphite);
+    --secondary-color: var(--slate);
+    --accent-color: var(--red);
+    --accent-dark: var(--red-deep);
+    --accent-bright: var(--coral);
+    --light-accent: var(--red);          /* old two-tone red gradients become flat red */
+    --text-dark: var(--graphite);
+    --text-light: var(--slate);
+    --white: #ffffff;
+    --light-bg: var(--porcelain);
+    --border-color: var(--line-light);
+    --shadow: 0 1px 2px rgba(18, 19, 22, 0.04), 0 8px 24px -12px rgba(18, 19, 22, 0.18);
+    --shadow-hover: 0 1px 2px rgba(18, 19, 22, 0.05), 0 16px 32px -14px rgba(18, 19, 22, 0.28);
+    --transition: transform var(--dur) var(--ease-out), opacity var(--dur) ease, background-color var(--dur) ease,
+        color var(--dur) ease, border-color var(--dur) ease, box-shadow var(--dur) ease;
+}
+
+/* Type: serif for page and section titles, sans for card titles — same mix as the home */
+main h1,
+main h2 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    text-transform: none;
+}
+
+main h3,
+main h4,
+main h5 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    text-transform: none;
+}
+
+main p,
+main li {
+    text-wrap: pretty;
+}
+
+/* The old design reset every list and link globally and these pages rely on it.
+   Running text (articles, legal pages) keeps real bullets and underlined links. */
+main ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+main a {
+    text-decoration: none;
+}
+
+.article-content ul,
+.legal-content ul {
+    list-style: disc;
+}
+
+.article-content ol {
+    list-style: decimal;
+}
+
+.article-content li::marker,
+.legal-content li::marker {
+    color: var(--red);
+}
+
+.article-content p a,
+.article-content li a,
+.legal-content a,
+.areas-note a,
+.form-note a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* old uppercase labels: sentence case reads calmer */
+main .intro-stat p,
+.article-category {
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* service names on the services page: serif, like the section titles */
+main .service-detail-text h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(2rem, 1.6rem + 1.4vw, 2.6rem);
+    letter-spacing: -0.015em;
+}
+
+/* glyph icons replaced by SVG icons: keep them a comfortable size */
+.feature-icon .icon,
+.trust-icon .icon,
+.stat-icon .icon,
+.value-icon .icon,
+.cert-check .icon,
+.feature-icon-box .icon {
+    width: 1em;
+    height: 1em;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons used by the old markup
+   -------------------------------------------------------------------------- */
+.btn-white {
+    background: #fff;
+    color: var(--graphite);
+}
+
+.btn-white-outline,
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+.btn-block {
+    display: flex;
+    width: 100%;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .btn-white:hover {
+        background: var(--porcelain);
+        transform: translateY(-2px);
+    }
+
+    .btn-white-outline:hover,
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.14);
+        transform: translateY(-2px);
+    }
+}
+
+/* on light backgrounds the "secondary" button is graphite */
+main section:not(.page-header):not(.cta-section):not(.article-header) .btn-secondary {
+    background: var(--graphite);
+    border-color: var(--graphite);
+}
+
+/* --------------------------------------------------------------------------
+   Page header — dark band under the transparent site header
+   -------------------------------------------------------------------------- */
+.page-header {
+    position: relative;
+    isolation: isolate;
+    padding: calc(var(--header-h) + clamp(56px, 8vw, 104px)) 0 clamp(56px, 8vw, 96px);
+    overflow: hidden;
+    background:
+        radial-gradient(60% 90% at 50% 0%, rgba(207, 52, 52, 0.14), rgba(207, 52, 52, 0) 70%),
+        radial-gradient(45% 80% at 90% 100%, rgba(201, 183, 156, 0.12), rgba(201, 183, 156, 0) 70%),
+        var(--night);
+    color: var(--on-dark);
+    text-align: center;
+}
+
+.page-header-overlay,
+.page-header::before {
+    display: none;
+}
+
+.page-header-content {
+    max-width: 48rem;
+    margin: 0 auto;
+}
+
+.header-badge-container {
+    margin-bottom: 16px;
+}
+
+/* the old pill label becomes the sans line above the serif title */
+.header-badge {
+    font-family: var(--font-sans);
+    font-size: clamp(1.05rem, 1rem + 0.4vw, 1.3rem);
+    font-weight: 600;
+    color: var(--on-dark);
+}
+
+.page-header h1 {
+    font-size: var(--fs-display);
+    font-style: italic;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--on-dark);
+}
+
+.page-header p {
+    max-width: 38rem;
+    margin: 20px auto 0;
+    font-size: var(--fs-lead);
+    color: var(--on-dark-muted);
+}
+
+.header-features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 32px;
+}
+
+.header-feature-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: var(--on-dark);
+    font-size: var(--fs-small);
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur) ease, border-color var(--dur) ease;
+}
+
+/* the old ■ ◆ ▸ glyphs */
+.header-feature-item .feature-icon {
+    display: none;
+}
+
+.header-feature-item:active {
+    transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .header-feature-item:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.36);
+    }
+}
+
+/* Blog post header: same night band; the old diagonal stripes are dropped */
+.article-header::before,
+.article-header::after {
+    display: none;
+}
+
+main .article-header h1 {
+    max-width: 22ch;
+    margin: 0 auto;
+    font-size: clamp(2.2rem, 1.5rem + 2.8vw, 3.75rem);
+    line-height: 1.05;
+    color: var(--on-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Section titles in the old markup: badge + h2 + p
+   -------------------------------------------------------------------------- */
+.section-header {
+    max-width: 46rem;
+    margin: 0 auto clamp(40px, 6vw, 64px);
+    text-align: center;
+}
+
+.section-badge {
+    display: block;
+    margin-bottom: 6px;
+    font-family: var(--font-sans);
+    font-size: clamp(1.05rem, 1rem + 0.4vw, 1.3rem);
+    font-weight: 600;
+    color: var(--graphite);
+    letter-spacing: -0.01em;
+    text-transform: none;
+}
+
+.section-header h2 {
+    font-size: var(--fs-h2);
+    font-style: italic;
+    line-height: 1.05;
+}
+
+.section-header p {
+    margin-top: 16px;
+    font-size: var(--fs-lead);
+    color: var(--slate);
+}
+
+/* --------------------------------------------------------------------------
+   CTA band at the end of a page (replaces the footer's own CTA there)
+   -------------------------------------------------------------------------- */
+.cta-section {
+    padding: clamp(72px, 10vw, 120px) 0;
+    background:
+        radial-gradient(50% 90% at 50% 100%, rgba(207, 52, 52, 0.16), rgba(207, 52, 52, 0) 70%),
+        var(--night);
+    color: var(--on-dark);
+    text-align: center;
+}
+
+.cta-content {
+    max-width: 44rem;
+    margin: 0 auto;
+}
+
+.cta-content h2 {
+    font-size: var(--fs-h2);
+    line-height: 1.05;
+    color: var(--on-dark);
+}
+
+.cta-content p {
+    margin-top: 16px;
+    font-size: var(--fs-lead);
+    color: var(--on-dark-muted);
+}
+
+.cta-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.cta-section .btn-primary {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* --------------------------------------------------------------------------
+   Legal pages (privacy, terms)
+   -------------------------------------------------------------------------- */
+.legal-page {
+    padding: calc(var(--header-h) + 64px) 0 var(--section);
+}
+
+.legal-content {
+    max-width: 44rem;
+    margin: 0 auto;
+}
+
+.legal-content h1 {
+    font-size: clamp(2.4rem, 1.8rem + 2.6vw, 3.6rem);
+    line-height: 1.05;
+}
+
+.legal-date {
+    margin: 12px 0 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line-light);
+    color: var(--slate);
+    font-size: var(--fs-small);
+}
+
+.legal-content h2 {
+    margin: 48px 0 14px;
+    font-size: 1.75rem;
+    line-height: 1.2;
+}
+
+.legal-content p,
+.legal-content li {
+    color: #3c3e44;
+    line-height: 1.7;
+}
+
+.legal-content p + p {
+    margin-top: 14px;
+}
+
+.legal-content ul {
+    display: grid;
+    gap: 10px;
+    margin: 14px 0;
+    padding-left: 1.2em;
+}
+
+.legal-content a {
+    color: var(--red-deep);
+    text-underline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   Simple pages (404, thank you)
+   -------------------------------------------------------------------------- */
+.simple-page {
+    display: grid;
+    place-items: center;
+    min-height: 82vh;
+    padding: calc(var(--header-h) + 48px) 0 72px;
+    text-align: center;
+}
+
+.simple-page .section-badge {
+    color: var(--red-deep);
+}
+
+.simple-page h1 {
+    font-size: var(--fs-display);
+    font-style: italic;
+    line-height: 1;
+}
+
+.simple-page p {
+    max-width: 36rem;
+    margin: 20px auto 0;
+    font-size: var(--fs-lead);
+    color: var(--slate);
+}
+
+.simple-page .cta-buttons {
+    margin-top: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   Scroll animation of the old markup ([data-aos], run by js/script.js):
+   same fade + light blur as the home page
+   -------------------------------------------------------------------------- */
+.js [data-aos] {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(6px);
+    transition:
+        opacity var(--dur-slow) var(--ease-out),
+        transform var(--dur-slow) var(--ease-out),
+        filter var(--dur-slow) var(--ease-out);
+}
+
+.js [data-aos].aos-animate {
+    opacity: 1;
+    transform: none;
+    filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .js [data-aos] {
+        transform: none;
+        filter: none;
+        transition: opacity 200ms ease;
+    }
+}

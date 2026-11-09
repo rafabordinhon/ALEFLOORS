@@ -56,8 +56,7 @@ AREAS = ["Orlando, FL", "Tampa, FL", "Daytona Beach, FL"]
 
 # Per-page settings (pages not listed use the defaults below; blog-*.html are blog posts)
 PAGES = {
-    # "v2": page uses the new design (css/base.css + new header/footer). Pages without it keep css/style.css.
-    "index.html": {"nav": "index.html", "schema": "business", "v2": True, "css": ["home"], "js": ["home"], "modules": ["hero-3d"]},
+    "index.html": {"nav": "index.html", "schema": "business", "css": ["home"], "js": ["home"], "modules": ["hero-3d"]},
     "service.html": {"nav": "service.html", "css": ["services"]},
     "about.html": {"nav": "about.html", "css": ["about"], "schema": "business"},
     "contact.html": {"nav": "contact.html", "css": ["contact"], "js": ["contact"], "schema": "business"},
@@ -75,10 +74,8 @@ REDIRECTS = {
     "/blog-polished-concrete-vs-epoxy-comparison": "/blog-concrete-vs-epoxy",
 }
 
-NAV_ITEMS_V2 = [("index.html", "Home"), ("service.html", "Services"), ("about.html", "About"),
+NAV_ITEMS = [("index.html", "Home"), ("service.html", "Services"), ("about.html", "About"),
                 ("contact.html", "Contact"), ("blog.html", "Blog")]
-NAV_ITEMS = [("index.html", "HOME"), ("service.html", "SERVICES"), ("about.html", "ABOUT"),
-             ("contact.html", "CONTACT"), ("blog.html", "BLOG")]
 
 # Runs before the page renders so scroll animations don't flash. Its hash goes into the CSP.
 INLINE_JS = "document.documentElement.classList.add('js');"
@@ -86,10 +83,10 @@ INLINE_JS = "document.documentElement.classList.add('js');"
 # Blog posts: first published on this site (Feb 2026); "updated" = month of the last build
 POSTS_PUBLISHED = "2026-02-24"
 
-# New design (v2): fonts and theme color
-FONTS_V2 = ("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500"
+# Fonts (Google Fonts) and browser theme color
+FONTS = ("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500"
             "&amp;family=Schibsted+Grotesk:wght@400..700&amp;display=swap")
-THEME_COLOR_V2 = "#121316"
+THEME_COLOR = "#121316"
 
 # ---------------------------------------------------------------------------
 
@@ -103,11 +100,6 @@ def whatsapp_link(text: str = "Hi Ale Floors! I'd like a free quote.") -> str:
     return f"https://wa.me/{WHATSAPP_NUMBER}?text=" + re.sub(r"[^A-Za-z0-9!'.]", lambda m: "%%%02X" % ord(m.group(0)), text)
 
 
-ICONS = {
-    "facebook": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
-    "instagram": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
-    "whatsapp": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.07c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.31l-.34-.2-3.57.94.95-3.48-.22-.36a9.43 9.43 0 0 1-1.44-5.03c0-5.2 4.24-9.44 9.45-9.44 2.52 0 4.89.99 6.67 2.77a9.37 9.37 0 0 1 2.76 6.68c0 5.21-4.24 9.43-9.45 9.43zm8.04-17.47A11.3 11.3 0 0 0 12.05.7C5.78.7.68 5.8.68 12.06c0 2 .52 3.96 1.52 5.68L.58 23.3l5.7-1.5a11.33 11.33 0 0 0 5.43 1.38h.01c6.26 0 11.36-5.1 11.36-11.36 0-3.04-1.18-5.89-3.33-8.04z"/></svg>',
-}
 
 
 def page_url(name: str) -> str:
@@ -119,8 +111,10 @@ def page_url(name: str) -> str:
 
 def settings_for(name: str) -> dict:
     if name.startswith("blog-"):
-        return {"nav": "blog.html", "css": ["blog"], "schema": "post"}
-    return PAGES.get(name, {})
+        cfg = {"nav": "blog.html", "css": ["blog"], "schema": "post"}
+    else:
+        cfg = dict(PAGES.get(name, {}))
+    return cfg
 
 
 def get_meta(text: str, name: str):
@@ -167,7 +161,6 @@ def post_schema(name: str, title: str, desc: str, image: str) -> dict:
 
 
 def build_head(name: str, title: str, desc: str, cfg: dict, faq=None) -> str:
-    v2 = cfg.get("v2")
     og_file = ROOT / "assets/images/og" / (name[:-5] + ".jpg")
     og_image = SITE_URL + "/" + (og_file.relative_to(ROOT).as_posix() if og_file.exists() else "assets/images/og/default.jpg")
     t, d = html.escape(title, quote=False).replace('"', "&quot;"), html.escape(desc, quote=False).replace('"', "&quot;")
@@ -182,7 +175,7 @@ def build_head(name: str, title: str, desc: str, cfg: dict, faq=None) -> str:
     else:
         lines.append(f'<link rel="canonical" href="{page_url(name)}">')
     lines += [
-        f'<meta name="theme-color" content="{THEME_COLOR_V2 if v2 else "#333333"}">',
+        f'<meta name="theme-color" content="{THEME_COLOR}">',
         f'<meta property="og:type" content="{"article" if cfg.get("schema") == "post" else "website"}">',
         '<meta property="og:site_name" content="Ale Floors">',
         f'<meta property="og:title" content="{t}">',
@@ -198,11 +191,13 @@ def build_head(name: str, title: str, desc: str, cfg: dict, faq=None) -> str:
         '<link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png">',
         '<link rel="preconnect" href="https://fonts.googleapis.com">',
         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
-        f'<link rel="stylesheet" href="{FONTS_V2}">' if v2 else
-        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap">',
-        '<link rel="stylesheet" href="css/base.css">' if v2 else '<link rel="stylesheet" href="css/style.css">',
+        f'<link rel="stylesheet" href="{FONTS}">',
+        '<link rel="stylesheet" href="css/base.css">',
     ]
-    lines += [f'<link rel="stylesheet" href="css/{css}.css">' for css in cfg.get("css", [])]
+    page_css = cfg.get("css", [])
+    if "home" not in page_css:
+        page_css = ["pages"] + page_css   # shared styles for the inner pages
+    lines += [f'<link rel="stylesheet" href="css/{css}.css">' for css in page_css]
     lines.append(f"<script>{INLINE_JS}</script>")
     if cfg.get("preload"):
         lines.append(f'<link rel="preload" as="image" href="{cfg["preload"]}" fetchpriority="high">')
@@ -216,6 +211,15 @@ def build_head(name: str, title: str, desc: str, cfg: dict, faq=None) -> str:
     return "<head>\n" + "".join(f"    {line}\n" for line in lines) + "</head>"
 
 
+DARK_FIRST_SECTIONS = ("hero", "page-header", "article-header")
+
+
+def starts_dark(content: str) -> bool:
+    """True when the page opens with a dark band, so the header starts with light text."""
+    first = re.search(r'<section class="([\w-]+)', content)
+    return bool(first and first.group(1) in DARK_FIRST_SECTIONS)
+
+
 def build_header(name: str, cfg: dict) -> str:
     items = []
     for href, label in NAV_ITEMS:
@@ -226,123 +230,8 @@ def build_header(name: str, cfg: dict) -> str:
     return f"""<body>
     <a class="skip-link" href="#main">Skip to main content</a>
 
-    <!-- Navigation (generated by tools/build.py — edit it there) -->
-    <nav class="navbar" id="navbar" aria-label="Main">
-        <div class="container">
-            <div class="nav-wrapper">
-                <a href="index.html" class="logo" aria-label="Ale Floors home">
-                    <span class="logo-name">ALE FLOORS</span>
-                    <span class="logo-tagline">Floor Covering Specialist</span>
-                </a>
-                <ul class="nav-menu" id="navMenu">
-{chr(10).join(items)}
-                </ul>
-                <button type="button" class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <main id="main">"""
-
-
-def build_footer(cfg: dict) -> str:
-    social = "".join(
-        f'\n                        <a href="{html.escape(url)}" target="_blank" rel="noopener" aria-label="Ale Floors on {key.title()}">{ICONS[key]}</a>'
-        for key, url in SOCIAL.items() if url
-    )
-    social_block = f'\n                    <div class="footer-social">{social}\n                    </div>' if social else ""
-    scripts = ["script"] + cfg.get("js", [])
-    script_tags = "\n".join(f'    <script src="js/{js}.js"></script>' for js in scripts)
-    year = datetime.date.today().year
-    wa_text = "Hi Ale Floors! I'd like a free quote."
-    wa_link = f"https://wa.me/{WHATSAPP_NUMBER}?text=" + re.sub(r"[^A-Za-z0-9!'.]", lambda m: "%%%02X" % ord(m.group(0)), wa_text)
-    return f"""    </main>
-
-    <!-- Footer (generated by tools/build.py — edit it there) -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <h2 class="footer-brand">Ale Floors</h2>
-                    <p class="footer-tagline">Our family takes care of yours</p>
-                    <p>We serve both homes and businesses, adapting our services to the specific needs of each client.</p>{social_block}
-                </div>
-                <div class="footer-col">
-                    <h2 class="footer-heading">Quick Links</h2>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="service.html">Services</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="contact.html">Contact</a></li>
-                        <li><a href="blog.html">Blog</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h2 class="footer-heading">Services</h2>
-                    <ul>
-                        <li><a href="service.html#metallic">Metallic Epoxy</a></li>
-                        <li><a href="service.html#garage">Garage Floors</a></li>
-                        <li><a href="service.html#pool">Pool Decks</a></li>
-                        <li><a href="service.html#epoxy-3d">3D Epoxy</a></li>
-                        <li><a href="service.html#polished">Polished Concrete</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h2 class="footer-heading">Get in Touch</h2>
-                    <ul class="footer-contact">
-                        <li>
-                            <span aria-hidden="true">📍</span>
-                            <span>{ADDRESS["city"]}, Florida, USA</span>
-                        </li>
-                        <li>
-                            <span aria-hidden="true">📞</span>
-                            <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a>
-                        </li>
-                        <li>
-                            <span aria-hidden="true">✉️</span>
-                            <a href="mailto:{EMAIL}">{EMAIL}</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h2 class="footer-heading">Legal</h2>
-                    <ul>
-                        <li><a href="privacy.html">Privacy Policy</a></li>
-                        <li><a href="terms.html">Terms of Service</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; {year} Ale Floors. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <a href="{wa_link}" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">{ICONS["whatsapp"]}</a>
-    <button type="button" class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
-
-{script_tags}
-</body>
-</html>
-"""
-
-
-def build_header_v2(name: str, cfg: dict) -> str:
-    items = []
-    for href, label in NAV_ITEMS_V2:
-        current = ""
-        if href == cfg.get("nav"):
-            current = ' class="active"' + (' aria-current="page"' if href == name else "")
-        items.append(f'                    <li><a href="{href}"{current}>{label}</a></li>')
-    return f"""<body>
-    <a class="skip-link" href="#main">Skip to main content</a>
-
     <!-- Header (generated by tools/build.py — edit it there) -->
-    <header class="site-header" id="navbar">
+    <header class="site-header{" over-dark" if cfg.get("_starts_dark") else ""}" id="navbar">
         <nav class="site-nav container-wide" aria-label="Main">
             <a href="index.html" class="logo" aria-label="Ale Floors home">
                 <span class="logo-name">Ale <em>Floors</em></span>
@@ -363,7 +252,7 @@ def build_header_v2(name: str, cfg: dict) -> str:
     <main id="main">"""
 
 
-def build_footer_v2(cfg: dict) -> str:
+def build_footer(cfg: dict) -> str:
     social = []
     for key, url in SOCIAL.items():
         if url:
@@ -381,18 +270,20 @@ def build_footer_v2(cfg: dict) -> str:
     full_address = f'{ADDRESS["street"]}, {ADDRESS["city"]}, {ADDRESS["region"]} {ADDRESS["zip"]}'
     maps = "https://www.google.com/maps/search/?api=1&amp;query=" + "+".join(full_address.split())
     areas = ", ".join(a.split(",")[0] for a in AREAS[:-1]) + " and " + AREAS[-1].split(",")[0]
-    return f"""    </main>
-
-    <!-- Footer (generated by tools/build.py — edit it there) -->
-    <footer class="site-footer">
-        <div class="container-wide">
+    # pages with their own call-to-action section don't repeat it in the footer
+    footer_cta = "" if cfg.get("_has_cta") else f"""
             <div class="footer-cta">
                 <p class="footer-cta-title">Ready to transform <em>your floor?</em></p>
                 <div class="footer-cta-actions">
                     <a href="{whatsapp_link()}" class="btn btn-primary" target="_blank" rel="noopener">{icon("whatsapp")}<span>Get a Free Quote</span></a>
                     <a href="tel:{PHONE_TEL}" class="btn btn-ghost">{icon("phone")}<span>{PHONE_DISPLAY}</span></a>
                 </div>
-            </div>
+            </div>"""
+    return f"""    </main>
+
+    <!-- Footer (generated by tools/build.py — edit it there) -->
+    <footer class="site-footer">
+        <div class="container-wide">{footer_cta}
             <div class="footer-grid">
                 <div class="footer-about">
                     <a href="index.html" class="logo" aria-label="Ale Floors home">
@@ -572,8 +463,9 @@ def process(path: Path, posts: list) -> None:
 
     html_tag = '<html lang="en"' + (f' data-ga-id="{GA_ID}"' if GA_ID else "") + ">"
     new = ("<!DOCTYPE html>\n" + html_tag + "\n" + build_head(name, title, desc, cfg, faq) + "\n"
-           + (build_header_v2(name, cfg) if cfg.get("v2") else build_header(name, cfg))
-           + content.rstrip() + "\n\n" + (build_footer_v2(cfg) if cfg.get("v2") else build_footer(cfg)))
+           + build_header(name, {**cfg, "_starts_dark": starts_dark(content)})
+           + content.rstrip() + "\n\n"
+           + build_footer({**cfg, "_has_cta": 'class="cta-section"' in content}))
     if new != text:
         path.write_text(new, encoding="utf-8", newline="\n")
         print("updated", name)

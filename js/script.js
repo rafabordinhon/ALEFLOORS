@@ -102,7 +102,7 @@
         // new design: while the header sits over a dark band ([data-header-dark] or the
         // footer) it uses dark glass instead of light glass
         const isNew = navbar && navbar.classList.contains('site-header');
-        const darkBands = isNew ? $$('[data-header-dark], .site-footer') : [];
+        const darkBands = isNew ? $$('[data-header-dark], .page-header, .article-header, .section-dark, .cta-section, .site-footer') : [];
         let ticking = false;
 
         const update = () => {

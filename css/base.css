@@ -240,7 +240,7 @@ p {
 .section-dark :focus-visible,
 .hero :focus-visible,
 .site-footer :focus-visible,
-.site-header:not(.scrolled) :focus-visible,
+.site-header.over-dark :focus-visible,
 .site-header.menu-open :focus-visible {
     outline-color: var(--coral);
 }
@@ -396,11 +396,13 @@ p {
 /* --------------------------------------------------------------------------
    Header — transparent over the dark hero, frosted light bar after scrolling
    -------------------------------------------------------------------------- */
+/* Text is dark by default; .over-dark (set by tools/build.py for pages that start
+   with a dark band, and kept up to date by js/script.js) switches it to light. */
 .site-header {
     position: fixed;
     inset: 0 0 auto;
     z-index: 100;
-    color: var(--on-dark);
+    color: var(--graphite);
     transition: color var(--dur) ease;
 }
 
@@ -416,10 +418,6 @@ p {
     backdrop-filter: saturate(1.4) blur(16px);
     opacity: 0;
     transition: opacity var(--dur) ease;
-}
-
-.site-header.scrolled {
-    color: var(--graphite);
 }
 
 .site-header.scrolled::before {
@@ -672,6 +670,73 @@ p {
         transform: none;
         filter: none;
         transition: opacity 200ms ease;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   FAQ accordion (<details class="faq-item">), used on the home and contact pages
+   -------------------------------------------------------------------------- */
+.faq-item {
+    border-bottom: 1px solid var(--line-light);
+}
+
+.faq-item:first-child {
+    border-top: 1px solid var(--line-light);
+}
+
+.faq-item summary {
+    position: relative;
+    padding: 24px 48px 24px 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+    line-height: 1.3;
+    list-style: none;
+    cursor: pointer;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+/* plus sign that turns into an x */
+.faq-item summary::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    background:
+        linear-gradient(currentColor, currentColor) center / 100% 1.5px no-repeat,
+        linear-gradient(currentColor, currentColor) center / 1.5px 100% no-repeat;
+    transition: transform var(--dur) var(--ease-out);
+}
+
+.faq-item[open] summary::after {
+    transform: rotate(45deg);
+}
+
+.faq-answer {
+    padding-bottom: 24px;
+    color: var(--slate);
+    max-width: 60ch;
+}
+
+.faq-item[open] .faq-answer {
+    animation: faq-in var(--dur) var(--ease-out);
+}
+
+@keyframes faq-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .faq-item[open] .faq-answer {
+        animation: none;
     }
 }
 

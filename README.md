@@ -7,15 +7,23 @@ HTML + CSS + JavaScript puro, hospedado no Netlify. Não precisa de build para p
 
 ```
 *.html                  páginas (index, service, about, contact, blog, blog-*, privacy, terms, thank-you, 404)
-css/style.css           estilos compartilhados (menu, rodapé, botões, cabeçalho das páginas internas)
-css/<página>.css        estilos específicos de cada página
-js/script.js            menu, animações, depoimentos, antes/depois, carrossel, Google Analytics
+css/base.css            sistema visual: cores, fontes, botões, menu, rodapé, animações, FAQ
+css/home.css            home (hero 3D, números, serviços, obras, cores, depoimentos, mapa)
+css/pages.css           páginas internas (cabeçalho escuro, títulos, CTA, páginas legais)
+css/<página>.css        estilos específicos de cada página interna
+js/script.js            menu, header, animações, contadores, antes/depois, Google Analytics
+js/home.js              home: quadro de cores e lightbox da galeria
+js/hero-3d.js           cena 3D do hero (Three.js); sem WebGL/celular fraco mostra a imagem estática
+js/vendor/              Three.js 0.170.0 (servido pelo próprio site)
 js/blog.js              filtro + paginação do blog
 js/contact.js           formulário (Netlify Forms + WhatsApp)
-assets/images/          imagens em WebP; og/ = imagens de compartilhamento; favicon/
+assets/icons.svg        todos os ícones do site
+assets/images/          imagens em WebP (+ cópias -600 para celular); hero/ = texturas e fallback do 3D
 tools/build.py          sincroniza <head>, menu, rodapé e gera sitemap/robots/_headers/_redirects
 tools/optimize-images.py converte novas fotos para WebP no tamanho certo
+tools/make-hero-textures.py gera as texturas do 3D a partir das amostras de flake
 _headers, _redirects    configuração do Netlify (gerados pelo build.py)
+docs/redesign/          estrutura e plano do redesign
 ```
 
 ## Ver localmente
@@ -36,7 +44,7 @@ Título e descrição de cada página ficam no `<head>` da própria página.
 
 - `SITE_URL` — troque quando tiver domínio próprio.
 - `GA_ID` — ID do Google Analytics 4 (ex.: `G-ABC123`). Vazio = desligado.
-- `SOCIAL` — links do Facebook/Instagram. Vazio = ícone escondido.
+- `SOCIAL` — links do Facebook/Instagram. Instagram vazio = aparece "Instagram (coming soon)" no rodapé.
 - Telefone, e-mail, endereço, horário e cidades atendidas (usados no rodapé e no Google).
 
 ## Novo post no blog
