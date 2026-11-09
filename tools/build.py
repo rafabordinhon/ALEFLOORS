@@ -56,7 +56,8 @@ AREAS = ["Orlando, FL", "Tampa, FL", "Daytona Beach, FL"]
 
 # Per-page settings (pages not listed use the defaults below; blog-*.html are blog posts)
 PAGES = {
-    "index.html": {"nav": "index.html", "schema": "business"},
+    # "v2": page uses the new design (css/base.css + new header/footer). Pages without it keep css/style.css.
+    "index.html": {"nav": "index.html", "schema": "business", "v2": True, "css": ["home"], "modules": ["hero-3d"]},
     "service.html": {"nav": "service.html", "css": ["services"]},
     "about.html": {"nav": "about.html", "css": ["about"], "schema": "business"},
     "contact.html": {"nav": "contact.html", "css": ["contact"], "js": ["contact"], "schema": "business"},
@@ -74,13 +75,33 @@ REDIRECTS = {
     "/blog-polished-concrete-vs-epoxy-comparison": "/blog-concrete-vs-epoxy",
 }
 
+NAV_ITEMS_V2 = [("index.html", "Home"), ("service.html", "Services"), ("about.html", "About"),
+                ("contact.html", "Contact"), ("blog.html", "Blog")]
 NAV_ITEMS = [("index.html", "HOME"), ("service.html", "SERVICES"), ("about.html", "ABOUT"),
              ("contact.html", "CONTACT"), ("blog.html", "BLOG")]
 
 # Runs before the page renders so scroll animations don't flash. Its hash goes into the CSP.
 INLINE_JS = "document.documentElement.classList.add('js');"
 
+# Blog posts: first published on this site (Feb 2026); "updated" = month of the last build
+POSTS_PUBLISHED = "2026-02-24"
+
+# New design (v2): fonts and theme color
+FONTS_V2 = ("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500"
+            "&amp;family=Schibsted+Grotesk:wght@400..700&amp;display=swap")
+THEME_COLOR_V2 = "#121316"
+
 # ---------------------------------------------------------------------------
+
+
+def icon(name: str, cls: str = "icon") -> str:
+    """Inline reference to an icon in assets/icons.svg (one icon set for the whole site)."""
+    return f'<svg class="{cls}" aria-hidden="true"><use href="assets/icons.svg#{name}"></use></svg>'
+
+
+def whatsapp_link(text: str = "Hi Ale Floors! I'd like a free quote.") -> str:
+    return f"https://wa.me/{WHATSAPP_NUMBER}?text=" + re.sub(r"[^A-Za-z0-9!'.]", lambda m: "%%%02X" % ord(m.group(0)), text)
+
 
 ICONS = {
     "facebook": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
@@ -141,10 +162,12 @@ def post_schema(name: str, title: str, desc: str, image: str) -> dict:
     org = {"@type": "Organization", "name": "Ale Floors", "url": SITE_URL + "/"}
     return {"@context": "https://schema.org", "@type": "BlogPosting", "headline": title.split(" | ")[0],
             "description": desc, "image": image, "url": page_url(name), "mainEntityOfPage": page_url(name),
+            "datePublished": POSTS_PUBLISHED, "dateModified": datetime.date.today().replace(day=1).isoformat(),
             "author": org, "publisher": {**org, "logo": {"@type": "ImageObject", "url": SITE_URL + "/assets/images/favicon/icon-512.png"}}}
 
 
-def build_head(name: str, title: str, desc: str, cfg: dict) -> str:
+def build_head(name: str, title: str, desc: str, cfg: dict, faq=None) -> str:
+    v2 = cfg.get("v2")
     og_file = ROOT / "assets/images/og" / (name[:-5] + ".jpg")
     og_image = SITE_URL + "/" + (og_file.relative_to(ROOT).as_posix() if og_file.exists() else "assets/images/og/default.jpg")
     t, d = html.escape(title, quote=False).replace('"', "&quot;"), html.escape(desc, quote=False).replace('"', "&quot;")
@@ -159,7 +182,7 @@ def build_head(name: str, title: str, desc: str, cfg: dict) -> str:
     else:
         lines.append(f'<link rel="canonical" href="{page_url(name)}">')
     lines += [
-        '<meta name="theme-color" content="#333333">',
+        f'<meta name="theme-color" content="{THEME_COLOR_V2 if v2 else "#333333"}">',
         f'<meta property="og:type" content="{"article" if cfg.get("schema") == "post" else "website"}">',
         '<meta property="og:site_name" content="Ale Floors">',
         f'<meta property="og:title" content="{t}">',
@@ -175,15 +198,21 @@ def build_head(name: str, title: str, desc: str, cfg: dict) -> str:
         '<link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png">',
         '<link rel="preconnect" href="https://fonts.googleapis.com">',
         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+        f'<link rel="stylesheet" href="{FONTS_V2}">' if v2 else
         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap">',
-        '<link rel="stylesheet" href="css/style.css">',
+        '<link rel="stylesheet" href="css/base.css">' if v2 else '<link rel="stylesheet" href="css/style.css">',
     ]
     lines += [f'<link rel="stylesheet" href="css/{css}.css">' for css in cfg.get("css", [])]
     lines.append(f"<script>{INLINE_JS}</script>")
+    if cfg.get("preload"):
+        lines.append(f'<link rel="preload" as="image" href="{cfg["preload"]}" fetchpriority="high">')
     if cfg.get("schema") == "business":
         lines.append(json_ld(business_schema()))
     elif cfg.get("schema") == "post":
         lines.append(json_ld(post_schema(name, title, desc, og_image)))
+    if faq:
+        lines.append(json_ld({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+            {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]}))
     return "<head>\n" + "".join(f"    {line}\n" for line in lines) + "</head>"
 
 
@@ -302,6 +331,133 @@ def build_footer(cfg: dict) -> str:
 """
 
 
+def build_header_v2(name: str, cfg: dict) -> str:
+    items = []
+    for href, label in NAV_ITEMS_V2:
+        current = ""
+        if href == cfg.get("nav"):
+            current = ' class="active"' + (' aria-current="page"' if href == name else "")
+        items.append(f'                    <li><a href="{href}"{current}>{label}</a></li>')
+    return f"""<body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <!-- Header (generated by tools/build.py — edit it there) -->
+    <header class="site-header" id="navbar">
+        <nav class="site-nav container-wide" aria-label="Main">
+            <a href="index.html" class="logo" aria-label="Ale Floors home">
+                <span class="logo-name">Ale <em>Floors</em></span>
+                <span class="logo-tagline">Floor Covering Specialist</span>
+            </a>
+            <ul class="nav-menu" id="navMenu">
+{chr(10).join(items)}
+                <li class="nav-menu-phone"><a href="tel:{PHONE_TEL}">{icon("phone")}<span>{PHONE_DISPLAY}</span></a></li>
+            </ul>
+            <a href="contact.html" class="btn btn-primary btn-small nav-cta">Free Quote</a>
+            <button type="button" class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </header>
+
+    <main id="main">"""
+
+
+def build_footer_v2(cfg: dict) -> str:
+    social = []
+    for key, url in SOCIAL.items():
+        if url:
+            social.append(f'<a href="{html.escape(url)}" target="_blank" rel="noopener" aria-label="Ale Floors on {key.title()}">{icon(key)}</a>')
+        elif key == "instagram":
+            # PLACEHOLDER: set SOCIAL["instagram"] at the top of this file to show the real link
+            social.append(f'<span class="footer-social-placeholder" title="Instagram link coming soon">{icon(key)}<span>Instagram (coming soon)</span></span>')
+    social_block = "\n                        ".join(social)
+    scripts = ["script"] + cfg.get("js", [])
+    script_tags = "\n".join(f'    <script src="js/{js}.js" defer></script>' for js in scripts)
+    script_tags += "".join(f'\n    <script type="module" src="js/{m}.js"></script>' for m in cfg.get("modules", []))
+    year = datetime.date.today().year
+    days = HOURS["days"]
+    hours_text = f"{days[0][:3]}–{days[-1][:3]}, 8 AM – 6 PM" if (HOURS["opens"], HOURS["closes"]) == ("08:00", "18:00") else f'{days[0][:3]}–{days[-1][:3]}, {HOURS["opens"]}–{HOURS["closes"]}'
+    full_address = f'{ADDRESS["street"]}, {ADDRESS["city"]}, {ADDRESS["region"]} {ADDRESS["zip"]}'
+    maps = "https://www.google.com/maps/search/?api=1&amp;query=" + "+".join(full_address.split())
+    areas = ", ".join(a.split(",")[0] for a in AREAS[:-1]) + " and " + AREAS[-1].split(",")[0]
+    return f"""    </main>
+
+    <!-- Footer (generated by tools/build.py — edit it there) -->
+    <footer class="site-footer">
+        <div class="container-wide">
+            <div class="footer-cta">
+                <p class="footer-cta-title">Ready to transform <em>your floor?</em></p>
+                <div class="footer-cta-actions">
+                    <a href="{whatsapp_link()}" class="btn btn-primary" target="_blank" rel="noopener">{icon("whatsapp")}<span>Get a Free Quote</span></a>
+                    <a href="tel:{PHONE_TEL}" class="btn btn-ghost">{icon("phone")}<span>{PHONE_DISPLAY}</span></a>
+                </div>
+            </div>
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <a href="index.html" class="logo" aria-label="Ale Floors home">
+                        <span class="logo-name">Ale <em>Floors</em></span>
+                        <span class="logo-tagline">Floor Covering Specialist</span>
+                    </a>
+                    <p class="footer-tagline">Our family takes care of yours.</p>
+                    <p>We serve both homes and businesses in {areas}, adapting our services to the specific needs of each client.</p>
+                    <div class="footer-social">
+                        {social_block}
+                    </div>
+                </div>
+                <div>
+                    <h2 class="footer-heading">Explore</h2>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="service.html">Services</a></li>
+                        <li><a href="about.html">About us</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h2 class="footer-heading">Services</h2>
+                    <ul>
+                        <li><a href="service.html#metallic">Metallic Epoxy</a></li>
+                        <li><a href="service.html#garage">Garage Floors</a></li>
+                        <li><a href="service.html#pool">Pool Decks</a></li>
+                        <li><a href="service.html#epoxy-3d">3D Epoxy</a></li>
+                        <li><a href="service.html#polished">Polished Concrete</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h2 class="footer-heading">Get in touch</h2>
+                    <ul class="footer-contact">
+                        <li>{icon("phone")}<a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>
+                        <li>{icon("whatsapp")}<a href="{whatsapp_link()}" target="_blank" rel="noopener">WhatsApp</a></li>
+                        <li>{icon("mail")}<a href="mailto:{EMAIL}">{EMAIL}</a></li>
+                        <li>{icon("clock")}<span>{hours_text}</span></li>
+                        <li>{icon("map-pin")}<a href="{maps}" target="_blank" rel="noopener">{full_address}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; {year} Ale Floors. All rights reserved.</p>
+                <p><a href="privacy.html">Privacy Policy</a><span aria-hidden="true"> / </span><a href="terms.html">Terms of Service</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Desktop: floating WhatsApp + back to top. Phones: fixed action bar. -->
+    <a href="{whatsapp_link()}" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">{icon("whatsapp")}</a>
+    <button type="button" class="back-to-top" id="backToTop" aria-label="Back to top">{icon("arrow-up")}</button>
+    <nav class="mobile-actions" aria-label="Quick contact">
+        <a href="tel:{PHONE_TEL}">{icon("phone")}<span>Call</span></a>
+        <a href="{whatsapp_link()}" target="_blank" rel="noopener">{icon("whatsapp")}<span>WhatsApp</span></a>
+        <a href="contact.html" class="mobile-actions-quote">{icon("calendar-check")}<span>Free Quote</span></a>
+    </nav>
+
+{script_tags}
+</body>
+</html>
+"""
+
+
 def blog_index() -> list:
     """Posts in the order of blog.html, with category, title and image."""
     text = (ROOT / "blog.html").read_text(encoding="utf-8")
@@ -324,7 +480,7 @@ def build_sidebar(slug: str, posts: list) -> str:
         others.sort(key=lambda p: p["category"] != me["category"])  # same topic first (stable sort)
     related = "".join(f"""
                             <a href="{p['slug']}.html" class="related-post-item">
-                                <img src="{p['image']}" alt="">
+                                <img src="{p['image']}" alt="" sizes="120px">
                                 <span class="related-post-title">{p['title']}</span>
                             </a>""" for p in others[:3])
     return f"""<aside class="article-sidebar">
@@ -356,16 +512,28 @@ def image_size(src: str):
 
 
 def fix_images(body: str) -> str:
-    """Add width/height (stops layout shift) and lazy loading to every <img>."""
+    """Add width/height (stops layout shift), lazy loading and srcset to every <img>.
+
+    srcset is added when a smaller copy exists next to the image (photo-600.webp,
+    created by tools/optimize-images.py), so phones download the small version.
+    An image with data-no-srcset is left alone.
+    """
     def repl(match):
         tag = match.group(0)
-        src = re.search(r'src="([^"]+)"', tag)
+        src = re.search(r'\ssrc="([^"]+)"', tag)
         size = image_size(src.group(1)) if src else None
         if size and "width=" not in tag:
             tag = tag.replace("<img ", f'<img width="{size[0]}" height="{size[1]}" ', 1)
-        eager = 'fetchpriority="high"' in tag or "article-featured-image" in tag
-        if not eager and "loading=" not in tag:
+        hero = 'fetchpriority="high"' in tag
+        featured = "article-featured-image" in tag
+        if not (hero or featured) and "loading=" not in tag:
             tag = tag.replace("<img ", '<img loading="lazy" decoding="async" ', 1)
+        if src and size and "srcset=" not in tag and "data-no-srcset" not in tag and src.group(1).endswith(".webp"):
+            small = src.group(1)[:-5] + "-600.webp"
+            if (ROOT / small).exists():
+                sizes = "100vw" if hero else "(max-width: 968px) 100vw, 760px" if featured else "(max-width: 768px) 100vw, 600px"
+                extra = "" if " sizes=" in tag else f' sizes="{sizes}"'
+                tag = tag.replace(f' src="{src.group(1)}"', f' src="{src.group(1)}" srcset="{small} 600w, {src.group(1)} {size[0]}w"{extra}', 1)
         return tag
     return re.sub(r"<img\b[^>]*>", repl, body)
 
@@ -398,9 +566,14 @@ def process(path: Path, posts: list) -> None:
     if not content.endswith("\n"):
         content += "\n"
 
+    # FAQ structured data from <details class="faq-item"><summary>Q</summary> ... <p>A</p></details>
+    faq = [(html.unescape(re.sub(r"<[^>]+>", "", q)).strip(), html.unescape(re.sub(r"<[^>]+>", "", a)).strip())
+           for q, a in re.findall(r'<details class="faq-item"[^>]*>\s*<summary[^>]*>(.*?)</summary>.*?<p>(.*?)</p>', content, re.S)]
+
     html_tag = '<html lang="en"' + (f' data-ga-id="{GA_ID}"' if GA_ID else "") + ">"
-    new = ("<!DOCTYPE html>\n" + html_tag + "\n" + build_head(name, title, desc, cfg) + "\n"
-           + build_header(name, cfg) + content.rstrip() + "\n\n" + build_footer(cfg))
+    new = ("<!DOCTYPE html>\n" + html_tag + "\n" + build_head(name, title, desc, cfg, faq) + "\n"
+           + (build_header_v2(name, cfg) if cfg.get("v2") else build_header(name, cfg))
+           + content.rstrip() + "\n\n" + (build_footer_v2(cfg) if cfg.get("v2") else build_footer(cfg)))
     if new != text:
         path.write_text(new, encoding="utf-8", newline="\n")
         print("updated", name)

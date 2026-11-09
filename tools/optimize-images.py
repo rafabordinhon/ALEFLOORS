@@ -9,6 +9,9 @@ What it does, for every .jpg / .jpeg / .png inside assets/images
   3. Updates every reference in the .html, .css and .js files.
   4. Deletes the original (it stays in the git history).
 
+Images wider than 900px also get a 600px copy (photo-600.webp); tools/build.py
+then adds srcset so phones download the small one.
+
 Blog images (assets/images/4-blog/<name>.png) also get a 1200x630 JPG copy in
 assets/images/og/blog-<name>.jpg, used as the preview picture when a post is
 shared on WhatsApp/Facebook. Name the blog image after the post file
@@ -27,6 +30,7 @@ MAX_SIZE = 1400
 BLOG_MAX_SIZE = 1200
 WEBP_QUALITY = 80
 OG_SIZE = (1200, 630)
+SMALL_WIDTH = 600
 
 
 def make_og(src: Image.Image, dest: Path) -> None:
@@ -74,6 +78,21 @@ def main() -> None:
     for path, text in texts.items():
         path.write_text(text, encoding="utf-8", newline="\n")
     print(f"\nSaved {saved / 1024 / 1024:.1f} MB")
+    make_small_copies()
+
+
+def make_small_copies() -> None:
+    """Create photo-600.webp next to every large .webp that doesn't have one yet."""
+    for src in sorted(IMAGES.rglob("*.webp")):
+        if src.stem.endswith(f"-{SMALL_WIDTH}") or SKIP_DIRS & set(src.relative_to(IMAGES).parts):
+            continue
+        small = src.with_name(f"{src.stem}-{SMALL_WIDTH}.webp")
+        image = Image.open(src)
+        if image.width <= 900 or small.exists():
+            continue
+        image.thumbnail((SMALL_WIDTH, SMALL_WIDTH * 4), Image.LANCZOS)
+        image.save(small, "WEBP", quality=WEBP_QUALITY, method=6)
+        print(f"small copy: {small.relative_to(ROOT).as_posix()} ({small.stat().st_size // 1024} KB)")
 
 
 if __name__ == "__main__":

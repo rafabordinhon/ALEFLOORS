@@ -1,5 +1,7 @@
 // Blog listing: category filter + pagination working together.
 // Each post card has data-category; each filter button has data-filter.
+// The current filter and page are kept in the URL (#maintenance/2), so the
+// back button returns to the same place.
 (() => {
     'use strict';
 
@@ -52,7 +54,21 @@
             button.setAttribute('aria-pressed', String(active));
         });
 
+        const hash = (filter === 'all' ? '' : slug(filter)) + (page > 1 ? '/' + page : '');
+        if (hash || window.location.hash) history.replaceState(null, '', hash ? '#' + hash : window.location.pathname);
+
         if (scroll) list.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    function slug(text) {
+        return text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    }
+
+    function readHash() {
+        const [cat, num] = window.location.hash.slice(1).split('/');
+        const match = filters.find((button) => button.dataset.filter !== 'all' && slug(button.dataset.filter) === cat);
+        filter = match ? match.dataset.filter : 'all';
+        page = parseInt(num, 10) || parseInt(cat, 10) || 1;
     }
 
     filters.forEach((button) => {
@@ -63,5 +79,12 @@
         });
     });
 
+    // Links like blog.html#maintenance (and the back button) update the list
+    window.addEventListener('hashchange', () => {
+        readHash();
+        render(false);
+    });
+
+    readHash();
     render(false);
 })();

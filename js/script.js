@@ -8,9 +8,8 @@
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // CSS hides [data-aos] elements only when this class is present,
-    // so content stays visible if JavaScript fails.
-    document.documentElement.classList.add('js');
+    // The inline script in <head> adds html.js; CSS hides animated elements only
+    // when that class is present, so content stays visible if JavaScript fails.
 
     // ========================================
     // ANALYTICS (Google Analytics 4)
@@ -50,11 +49,16 @@
 
     // ========================================
     // MOBILE MENU
+    // While open, the rest of the page is inert so keyboard focus stays in the menu.
     // ========================================
     function initNav() {
         const hamburger = $('#hamburger');
         const menu = $('#navMenu');
+        const header = $('#navbar');
         if (!hamburger || !menu) return;
+        const isNew = header && header.classList.contains('site-header');
+        const outside = ['main', 'footer', '.mobile-actions', '.whatsapp-float', '.back-to-top', '.nav-cta']
+            .map((selector) => $(selector)).filter(Boolean);
 
         const setOpen = (open) => {
             hamburger.classList.toggle('active', open);
@@ -62,6 +66,15 @@
             hamburger.setAttribute('aria-expanded', String(open));
             hamburger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
             document.body.style.overflow = open ? 'hidden' : '';
+            if (header) header.classList.toggle('menu-open', open);
+            outside.forEach((el) => { el.inert = open; });
+            if (open) {
+                // wait a frame so the menu is visible before moving focus into it
+                window.requestAnimationFrame(() => {
+                    const first = menu.querySelector('a');
+                    if (first) first.focus();
+                });
+            }
         };
 
         hamburger.addEventListener('click', () => setOpen(!menu.classList.contains('active')));
@@ -75,7 +88,7 @@
             }
         });
         // Close the menu if the screen grows to desktop size while it is open
-        window.matchMedia('(min-width: 769px)').addEventListener('change', (event) => {
+        window.matchMedia(isNew ? '(min-width: 1024px)' : '(min-width: 769px)').addEventListener('change', (event) => {
             if (event.matches) setOpen(false);
         });
     }
@@ -86,12 +99,23 @@
     function initScrollState() {
         const navbar = $('#navbar');
         const backToTop = $('#backToTop');
+        // new design: while the header sits over a dark band ([data-header-dark] or the
+        // footer) it uses dark glass instead of light glass
+        const isNew = navbar && navbar.classList.contains('site-header');
+        const darkBands = isNew ? $$('[data-header-dark], .site-footer') : [];
         let ticking = false;
 
         const update = () => {
             const y = window.scrollY;
-            if (navbar) navbar.classList.toggle('scrolled', y > 100);
-            if (backToTop) backToTop.classList.toggle('visible', y > 300);
+            if (darkBands.length) {
+                const middle = navbar.offsetHeight / 2;
+                navbar.classList.toggle('over-dark', darkBands.some((band) => {
+                    const rect = band.getBoundingClientRect();
+                    return rect.top <= middle && rect.bottom >= middle;
+                }));
+            }
+            if (navbar) navbar.classList.toggle('scrolled', y > (navbar.classList.contains('site-header') ? 24 : 100));
+            if (backToTop) backToTop.classList.toggle('visible', y > 600);
             ticking = false;
         };
 
@@ -133,6 +157,112 @@
         }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
         elements.forEach((el) => observer.observe(el));
+    }
+
+    // ========================================
+    // REVEAL ON SCROLL (new design): [data-reveal] fades in with a light blur.
+    // Optional data-reveal-delay (ms). Children of [data-reveal-group] stagger.
+    // ========================================
+    function initReveal() {
+        const elements = $$('[data-reveal]');
+        if (!elements.length) return;
+        $$('[data-reveal-group]').forEach((group) => {
+            $$('[data-reveal]', group).forEach((el, i) => {
+                if (!el.dataset.revealDelay) el.dataset.revealDelay = String(Math.min(i, 6) * 60);
+            });
+        });
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+            elements.forEach((el) => el.classList.add('is-visible'));
+            return;
+        }
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                const delay = parseInt(entry.target.dataset.revealDelay, 10);
+                if (delay) entry.target.style.transitionDelay = delay + 'ms';
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+        elements.forEach((el) => observer.observe(el));
+    }
+
+    // ========================================
+    // WORD-BY-WORD TITLE (new design): the text of [data-split] is split into
+    // words that fade up one after another. Screen readers get the full text
+    // from a visually hidden copy, so nothing is read word by word.
+    // ========================================
+    function initSplitWords() {
+        if (reduceMotion) return;
+        $$('[data-split]').forEach((title) => {
+            const base = parseInt(title.dataset.splitDelay, 10) || 0;
+            const readable = document.createElement('span');
+            readable.className = 'sr-only';
+            readable.textContent = title.textContent.replace(/\s+/g, ' ').trim();
+            let index = 0;
+            const walk = (node) => {
+                Array.from(node.childNodes).forEach((child) => {
+                    if (child.nodeType === Node.TEXT_NODE) {
+                        const frag = document.createDocumentFragment();
+                        child.textContent.split(/(\s+)/).forEach((part) => {
+                            if (!part) return;
+                            if (/^\s+$/.test(part)) {
+                                frag.appendChild(document.createTextNode(' '));
+                                return;
+                            }
+                            const word = document.createElement('span');
+                            word.className = 'word';
+                            word.setAttribute('aria-hidden', 'true');
+                            word.style.transitionDelay = (base + index * 70) + 'ms';
+                            word.textContent = part;
+                            index += 1;
+                            frag.appendChild(word);
+                        });
+                        child.replaceWith(frag);
+                    } else if (child.nodeType === Node.ELEMENT_NODE) {
+                        child.setAttribute('aria-hidden', 'true');
+                        walk(child);
+                    }
+                });
+            };
+            walk(title);
+            title.prepend(readable);
+            title.classList.add('is-split');
+            // two frames: let the browser paint the hidden words before revealing them
+            window.requestAnimationFrame(() => window.requestAnimationFrame(() => title.classList.add('is-visible')));
+        });
+    }
+
+    // ========================================
+    // COUNTERS (new design): [data-count="1533"] counts up once when visible.
+    // The final text is already in the HTML, so it is correct without JS.
+    // ========================================
+    function initCounters() {
+        const numbers = $$('[data-count]');
+        if (!numbers.length || reduceMotion || !('IntersectionObserver' in window)) return;
+        const run = (el) => {
+            const target = parseInt(el.dataset.count, 10);
+            const finalText = el.textContent;
+            if (!target) return;
+            const start = performance.now();
+            const duration = 1400;
+            const step = (now) => {
+                const t = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - t, 3);
+                el.textContent = Math.round(target * eased).toLocaleString('en-US');
+                if (t < 1) window.requestAnimationFrame(step);
+                else el.textContent = finalText;
+            };
+            window.requestAnimationFrame(step);
+        };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                run(entry.target);
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.6 });
+        numbers.forEach((el) => observer.observe(el));
     }
 
     // ========================================
@@ -310,6 +440,9 @@
     initNav();
     initScrollState();
     initScrollAnimations();
+    initReveal();
+    initSplitWords();
+    initCounters();
     initTestimonials();
     initBeforeAfter();
     initStatsCounter();

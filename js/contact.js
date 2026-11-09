@@ -66,12 +66,13 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams(new FormData(form)).toString(),
+                signal: AbortSignal.timeout(15000), // give up after 15 s instead of hanging
             });
             if (!response.ok) throw new Error('HTTP ' + response.status);
             track('generate_lead', { method: 'form' });
             window.location.href = form.getAttribute('action') || 'thank-you.html';
         } catch (error) {
-            setStatus('Sorry, we could not send your request right now. Please use the WhatsApp button below or call +1 (347) 998-6695.', true);
+            setStatus('Your request was not sent. Check your connection and try again, or send it with the WhatsApp button below or call +1 (347) 998-6695.', true);
             submitButton.disabled = false;
             submitButton.classList.remove('loading');
         }

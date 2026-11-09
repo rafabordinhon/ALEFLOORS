@@ -1,0 +1,198 @@
+/* ==========================================================================
+   Home page
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Hero — dark, cinematic; the 3D floor sample sits on the right (desktop)
+   or at the top (phones). Text always sits on a gradient so it stays readable.
+   -------------------------------------------------------------------------- */
+.hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    background:
+        radial-gradient(90% 70% at 72% 42%, #2a2c31 0%, rgba(42, 44, 49, 0) 60%),
+        var(--night);
+    color: var(--on-dark);
+}
+
+.hero-media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+}
+
+.hero-fallback,
+.hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-fallback {
+    object-fit: cover;
+    object-position: 50% 0;
+    transition: opacity 600ms var(--ease-out);
+}
+
+.hero-canvas {
+    opacity: 0;
+    transition: opacity 600ms var(--ease-out);
+}
+
+/* js/hero-3d.js adds html.has-3d after the first frame is drawn */
+.has-3d .hero-canvas {
+    opacity: 1;
+}
+
+.has-3d .hero-fallback {
+    opacity: 0;
+}
+
+/* readability: night fades in from the text side */
+.hero-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(to top, var(--night) 0%, rgba(18, 19, 22, 0.86) 34%, rgba(18, 19, 22, 0) 62%),
+        linear-gradient(to bottom, rgba(18, 19, 22, 0.55) 0%, rgba(18, 19, 22, 0) 22%);
+}
+
+.hero-inner {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding-top: calc(var(--header-h) + 32px);
+    padding-bottom: clamp(40px, 8vh, 88px);
+}
+
+.hero-copy {
+    max-width: 40rem;
+}
+
+.hero-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-display);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+}
+
+.hero-title .sans {
+    display: block;
+    margin-bottom: 0.12em;
+    font-family: var(--font-sans);
+    font-size: 0.5em;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--on-dark);
+}
+
+.hero-title em {
+    display: block;
+    font-style: italic;
+    font-variation-settings: "opsz" 72;
+}
+
+.hero-lead {
+    max-width: 34rem;
+    margin-top: 24px;
+    font-size: var(--fs-lead);
+    line-height: 1.55;
+    color: var(--on-dark-muted);
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+@media (max-width: 479px) {
+    .hero-actions .btn {
+        flex: 1 1 100%;
+    }
+}
+
+/* layer labels: positioned next to each 3D layer by js/hero-3d.js (desktop only) */
+.hero-layers {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .hero {
+        background:
+            radial-gradient(60% 75% at 74% 48%, #2b2d33 0%, rgba(43, 45, 51, 0) 65%),
+            var(--night);
+    }
+
+    .hero-media::after {
+        background:
+            linear-gradient(to right, var(--night) 0%, rgba(18, 19, 22, 0.82) 30%, rgba(18, 19, 22, 0) 56%),
+            linear-gradient(to bottom, rgba(18, 19, 22, 0.5) 0%, rgba(18, 19, 22, 0) 20%);
+    }
+
+    .hero-inner {
+        align-items: center;
+        padding-bottom: 48px;
+    }
+
+    .hero-fallback {
+        object-position: 50% 50%;
+    }
+
+    .hero-copy {
+        max-width: min(36rem, 44vw);
+    }
+
+    .has-3d .hero-layers {
+        display: block;
+        position: absolute;
+        inset: 0;
+        list-style: none;
+        padding: 0;
+        pointer-events: none;
+    }
+
+    .hero-layers li {
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: var(--fs-xs);
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        color: var(--on-dark-muted);
+        white-space: nowrap;
+        opacity: 0;
+        will-change: transform, opacity;
+    }
+
+    /* hairline that points at the layer */
+    .hero-layers li::before {
+        content: "";
+        width: 32px;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.6;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   TEMPORARY note while the rest of the page is rebuilt
+   -------------------------------------------------------------------------- */
+.redesign-note {
+    text-align: center;
+    color: var(--slate);
+    border-bottom: 1px dashed var(--line-light);
+}
