@@ -57,7 +57,7 @@ AREAS = ["Orlando, FL", "Tampa, FL", "Daytona Beach, FL"]
 # Per-page settings (pages not listed use the defaults below; blog-*.html are blog posts)
 PAGES = {
     # "v2": page uses the new design (css/base.css + new header/footer). Pages without it keep css/style.css.
-    "index.html": {"nav": "index.html", "schema": "business", "v2": True, "css": ["home"], "modules": ["hero-3d"]},
+    "index.html": {"nav": "index.html", "schema": "business", "v2": True, "css": ["home"], "js": ["home"], "modules": ["hero-3d"]},
     "service.html": {"nav": "service.html", "css": ["services"]},
     "about.html": {"nav": "about.html", "css": ["about"], "schema": "business"},
     "contact.html": {"nav": "contact.html", "css": ["contact"], "js": ["contact"], "schema": "business"},

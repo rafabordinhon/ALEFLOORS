@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="css/home.css">
     <script>document.documentElement.classList.add('js');</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Ale Floors","description":"Epoxy flooring, epoxy flake garage floors, metallic and 3D epoxy, polyaspartic pool decks, polished concrete and floor painting in Central Florida.","url":"https://alefloors.netlify.app/","image":"https://alefloors.netlify.app/assets/images/og/default.jpg","logo":"https://alefloors.netlify.app/assets/images/favicon/icon-512.png","telephone":"+13479986695","email":"alefloors10@gmail.com","address":{"@type":"PostalAddress","streetAddress":"13581 Fordwell Dr","addressLocality":"Orlando","addressRegion":"FL","postalCode":"32828","addressCountry":"US"},"areaServed":["Orlando, FL","Tampa, FL","Daytona Beach, FL"],"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"08:00","closes":"18:00"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How long does installation take?","acceptedAnswer":{"@type":"Answer","text":"Most residential projects take 2-3 days. Commercial projects vary based on size and complexity."}},{"@type":"Question","name":"Do you offer free quotes?","acceptedAnswer":{"@type":"Answer","text":"Yes! All quotes and consultations are completely free with no obligation."}},{"@type":"Question","name":"What areas do you serve?","acceptedAnswer":{"@type":"Answer","text":"We serve Orlando, Tampa, Daytona Beach, and surrounding areas throughout Florida."}},{"@type":"Question","name":"Is epoxy flooring durable?","acceptedAnswer":{"@type":"Answer","text":"Absolutely! Our epoxy floors are highly durable, resistant to impacts, chemicals, and daily wear."}}]}</script>
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to main content</a>
@@ -83,441 +84,334 @@
         </div>
     </section>
 
-    <!-- TEMPORARY (redesign in progress): the sections below are rebuilt one by one after the hero is approved.
-         Their content is kept here, hidden, so nothing is lost. -->
-    <section class="section redesign-note" id="work">
-        <div class="container">
-            <p><strong>Preview:</strong> the next sections (numbers, services, projects, colors, reviews, FAQ and location) are being rebuilt in the new design.</p>
+    <!-- Numbers -->
+    <section class="numbers" data-header-dark aria-labelledby="numbers-title">
+        <div class="container-wide">
+            <h2 id="numbers-title" class="sr-only">Ale Floors in numbers</h2>
+            <ul class="numbers-list" data-reveal-group>
+                <li class="number-card" data-reveal>
+                    <span class="number-value"><span data-count="9">9</span>+</span>
+                    <span class="number-label">Years of experience</span>
+                </li>
+                <li class="number-card" data-reveal>
+                    <span class="number-value"><span data-count="1533">1,533</span>+</span>
+                    <span class="number-label">Projects completed</span>
+                </li>
+                <li class="number-card" data-reveal>
+                    <span class="number-value"><span data-count="1131">1,131</span>+</span>
+                    <span class="number-label">Clients</span>
+                </li>
+                <!-- PLACEHOLDER: replace XX with the real square footage installed, then add data-count="12345" to the inner span -->
+                <li class="number-card is-placeholder" data-reveal>
+                    <span class="number-value"><span>XX</span>+</span>
+                    <span class="number-label">Square feet installed</span>
+                </li>
+            </ul>
         </div>
     </section>
-    <div class="legacy-sections" hidden>
-    <!-- Services Overview -->
-    <section class="services-overview">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Our Expertise</span>
-                <h2>Premium Floor Solutions</h2>
-                <p>Professional installation with guaranteed quality and durability</p>
+
+    <!-- Services (bento grid) -->
+    <section class="section services" id="services" aria-labelledby="services-title">
+        <div class="container-wide">
+            <div class="section-head" data-reveal>
+                <h2 id="services-title" class="title"><span class="sans">Our expertise</span> <em>Premium floor solutions</em></h2>
+                <p>Professional installation with guaranteed quality and durability.</p>
             </div>
-            <div class="services-grid">
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-image">
-                        <img loading="lazy" decoding="async" width="1189" height="724" src="assets/images/1-home/generalServices/metallicEpoxy.webp" srcset="assets/images/1-home/generalServices/metallicEpoxy-600.webp 600w, assets/images/1-home/generalServices/metallicEpoxy.webp 1189w" sizes="(max-width: 768px) 100vw, 600px" alt="Metallic Epoxy">
-                        <div class="service-overlay">
-                            <a href="contact.html" class="btn btn-white">Request Quote</a>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3>Metallic Epoxy</h3>
+            <div class="bento" data-reveal-group>
+                <article class="svc svc-metallic" data-reveal>
+                    <img loading="lazy" decoding="async" width="1189" height="724" src="assets/images/1-home/generalServices/metallicEpoxy.webp" srcset="assets/images/1-home/generalServices/metallicEpoxy-600.webp 600w, assets/images/1-home/generalServices/metallicEpoxy.webp 1189w" alt="Living room with a glossy dark metallic epoxy floor" sizes="(max-width: 767px) 100vw, (max-width: 1023px) 100vw, 50vw">
+                    <div class="svc-body">
+                        <h3><a href="service.html#metallic">Metallic Epoxy</a></h3>
                         <p>From your luxurious living room to your office. Guaranteed quality and durability with our 4-layer procedure. Impact resistant and ideal for indoor use.</p>
-                        <ul class="service-features">
-                            <li>✓ 4-Layer Protection</li>
-                            <li>✓ Impact Resistant</li>
-                            <li>✓ Luxury Finish</li>
+                        <ul class="svc-features">
+                            <li>4-layer protection</li>
+                            <li>Impact resistant</li>
+                            <li>Luxury finish</li>
                         </ul>
                     </div>
-                </div>
-
-                <div class="service-card" data-aos="fade-up" data-aos-delay="100">
-                    <div class="service-image">
-                        <img loading="lazy" decoding="async" width="601" height="451" src="assets/images/1-home/generalServices/epoxyGarageFloor.webp" alt="Garage Epoxy Floor">
-                        <div class="service-overlay">
-                            <a href="contact.html" class="btn btn-white">Request Quote</a>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3>Epoxy Garage Floor</h3>
-                        <p>Flake Epoxy is the most common solution, widely used in garages and common areas. Non-slip and resistant, perfect for outdoor areas with sun, rain, and heavy weights.</p>
-                        <ul class="service-features">
-                            <li>✓ Non-Slip Surface</li>
-                            <li>✓ Weather Resistant</li>
-                            <li>✓ Heavy Duty</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="service-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="service-image">
-                        <img loading="lazy" decoding="async" width="753" height="478" src="assets/images/1-home/generalServices/polyAsparticPoolDeck.webp" alt="Pool Deck">
-                        <div class="service-overlay">
-                            <a href="contact.html" class="btn btn-white">Request Quote</a>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3>Polyaspartic Pool Deck</h3>
+                </article>
+                <article class="svc svc-pool" data-reveal>
+                    <img loading="lazy" decoding="async" width="753" height="478" src="assets/images/1-home/generalServices/polyAsparticPoolDeck.webp" alt="Screened pool deck with a beige polyaspartic flake coating">
+                    <div class="svc-body">
+                        <h3><a href="service.html#pool">Polyaspartic Pool Deck</a></h3>
                         <p>10x more resistant than epoxy. UV protection, impact resistant, doesn't mold, with lifetime guarantee against cracks and defects.</p>
-                        <ul class="service-features">
-                            <li>✓ UV Protected</li>
-                            <li>✓ Lifetime Guarantee</li>
-                            <li>✓ Mold Resistant</li>
-                        </ul>
                     </div>
-                </div>
-
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-image">
-                        <img loading="lazy" decoding="async" width="1200" height="953" src="assets/images/1-home/generalServices/3dEpoxyFloors.webp" srcset="assets/images/1-home/generalServices/3dEpoxyFloors-600.webp 600w, assets/images/1-home/generalServices/3dEpoxyFloors.webp 1200w" sizes="(max-width: 768px) 100vw, 600px" alt="3D Epoxy">
-                        <div class="service-overlay">
-                            <a href="contact.html" class="btn btn-white">Request Quote</a>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3>3D Epoxy Floors</h3>
-                        <p>Great finish for those looking for exclusivity and vibrant colors. Create realistic landscapes perfect for bathrooms, living rooms, and offices.</p>
-                        <ul class="service-features">
-                            <li>✓ Custom Designs</li>
-                            <li>✓ Realistic 3D Effect</li>
-                            <li>✓ Unique Finish</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="service-card" data-aos="fade-up" data-aos-delay="100">
-                    <div class="service-image">
-                        <img loading="lazy" decoding="async" width="1050" height="1400" src="assets/images/1-home/generalServices/polishedConcrete.webp" srcset="assets/images/1-home/generalServices/polishedConcrete-600.webp 600w, assets/images/1-home/generalServices/polishedConcrete.webp 1050w" sizes="(max-width: 768px) 100vw, 600px" alt="Polished Concrete">
-                        <div class="service-overlay">
-                            <a href="contact.html" class="btn btn-white">Request Quote</a>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3>Polished Concrete</h3>
+                </article>
+                <article class="svc svc-polished" data-reveal>
+                    <img loading="lazy" decoding="async" width="1050" height="1400" src="assets/images/1-home/generalServices/polishedConcrete.webp" srcset="assets/images/1-home/generalServices/polishedConcrete-600.webp 600w, assets/images/1-home/generalServices/polishedConcrete.webp 1050w" alt="Polished concrete floor reflecting tall windows" sizes="(max-width: 767px) 100vw, 25vw">
+                    <div class="svc-body">
+                        <h3><a href="service.html#polished">Polished Concrete</a></h3>
                         <p>Great value for money, can be applied directly to concrete. Perfect for home or business with great aesthetics and easy to clean.</p>
-                        <ul class="service-features">
-                            <li>✓ Cost Effective</li>
-                            <li>✓ Easy Maintenance</li>
-                            <li>✓ Modern Look</li>
-                        </ul>
                     </div>
-                </div>
-
-                <div class="service-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="service-image">
-                        <img loading="lazy" decoding="async" width="1400" height="1050" src="assets/images/1-home/generalServices/floorPainting.webp" srcset="assets/images/1-home/generalServices/floorPainting-600.webp 600w, assets/images/1-home/generalServices/floorPainting.webp 1400w" sizes="(max-width: 768px) 100vw, 600px" alt="Floor Painting">
-                        <div class="service-overlay">
-                            <a href="contact.html" class="btn btn-white">Request Quote</a>
-                        </div>
+                </article>
+                <article class="svc svc-garage" data-reveal>
+                    <img loading="lazy" decoding="async" width="735" height="557" src="assets/images/2-service/homeServices/garage.webp" alt="Black sports car parked on a blue and gray epoxy flake garage floor">
+                    <div class="svc-body">
+                        <h3><a href="service.html#garage">Epoxy Garage Floor</a></h3>
+                        <p>Flake Epoxy is the most common solution, widely used in garages and common areas. Non-slip and resistant, perfect for outdoor areas with sun, rain, and heavy weights.</p>
                     </div>
-                    <div class="service-content">
-                        <h3>Floor Painting</h3>
+                </article>
+                <article class="svc svc-3d" data-reveal>
+                    <img loading="lazy" decoding="async" width="1200" height="953" src="assets/images/1-home/generalServices/3dEpoxyFloors.webp" srcset="assets/images/1-home/generalServices/3dEpoxyFloors-600.webp 600w, assets/images/1-home/generalServices/3dEpoxyFloors.webp 1200w" alt="Living room with a 3D epoxy floor that looks like a beach and sea" sizes="(max-width: 767px) 100vw, 50vw">
+                    <div class="svc-body">
+                        <h3><a href="service.html#epoxy-3d">3D Epoxy Floors</a></h3>
+                        <p>Great finish for those looking for exclusivity and vibrant colors. Create realistic landscapes perfect for bathrooms, living rooms, and offices.</p>
+                    </div>
+                </article>
+                <article class="svc svc-painting" data-reveal>
+                    <img loading="lazy" decoding="async" width="1400" height="1050" src="assets/images/1-home/generalServices/floorPainting.webp" srcset="assets/images/1-home/generalServices/floorPainting-600.webp 600w, assets/images/1-home/generalServices/floorPainting.webp 1400w" alt="Warehouse with a freshly painted light gray floor" sizes="(max-width: 767px) 100vw, 50vw">
+                    <div class="svc-body">
+                        <h3><a href="service.html#painting">Floor Painting</a></h3>
                         <p>Solid color painting giving a new look to your floor, sidewalk, balcony, or parking lot. Various colors available to enhance aesthetics.</p>
-                        <ul class="service-features">
-                            <li>✓ Multiple Colors</li>
-                            <li>✓ Quick Application</li>
-                            <li>✓ Affordable Solution</li>
-                        </ul>
                     </div>
-                </div>
+                </article>
             </div>
         </div>
     </section>
 
-    <!-- Before & After Gallery -->
-    <section class="before-after">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Real Results</span>
-                <h2>Our Work Speaks For Itself</h2>
-                <p>Real projects from our team — drag the slider to compare</p>
+    <!-- Process -->
+    <section class="section process" id="process" aria-labelledby="process-title">
+        <div class="container-wide">
+            <div class="section-head" data-reveal>
+                <h2 id="process-title" class="title"><span class="sans">Our process</span> <em>Professional installation steps</em></h2>
+                <p>Quality results through our proven 4-layer epoxy flake procedure.</p>
             </div>
-            <div class="before-after-grid">
-                <div class="ba-item" data-aos="fade-up">
+            <ol class="steps" data-reveal-group>
+                <li class="step" data-reveal>
+                    <span class="step-number" aria-hidden="true">01</span>
+                    <h3>Surface preparation</h3>
+                    <p>Thorough cleaning and grinding to ensure optimal adhesion.</p>
+                </li>
+                <li class="step" data-reveal>
+                    <span class="step-number" aria-hidden="true">02</span>
+                    <h3>Primer application</h3>
+                    <p>High-quality primer coat for maximum durability.</p>
+                </li>
+                <li class="step" data-reveal>
+                    <span class="step-number" aria-hidden="true">03</span>
+                    <h3>Base &amp; flake layer</h3>
+                    <p>Application of colored base and decorative flakes.</p>
+                </li>
+                <li class="step" data-reveal>
+                    <span class="step-number" aria-hidden="true">04</span>
+                    <h3>Topcoat sealing</h3>
+                    <p>Premium clear coat for protection and shine.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- Our work: before/after + gallery with lightbox (js/home.js) -->
+    <section class="section section-dark work" id="work" data-header-dark aria-labelledby="work-title">
+        <div class="container-wide">
+            <div class="section-head" data-reveal>
+                <h2 id="work-title" class="title"><span class="sans">Real results</span> <em>Our work speaks for itself</em></h2>
+                <p>Real projects from our team. Drag the slider to compare.</p>
+            </div>
+            <div class="ba-grid" data-reveal-group>
+                <figure class="ba-item" data-reveal>
                     <div class="ba-slider">
-                        <div class="ba-before">
-                            <img loading="lazy" decoding="async" width="300" height="225" src="assets/images/1-home/finishedServices/FS9.webp" alt="Pool deck before: worn, stained concrete around the pool">
-                            <span class="ba-label ba-label-before">BEFORE</span>
-                        </div>
-                        <div class="ba-after">
-                            <img loading="lazy" decoding="async" width="1400" height="1050" src="assets/images/2-service/homeServices/pool.webp" srcset="assets/images/2-service/homeServices/pool-600.webp 600w, assets/images/2-service/homeServices/pool.webp 1400w" sizes="(max-width: 768px) 100vw, 600px" alt="Same pool deck after: new decorative flake coating">
-                            <span class="ba-label ba-label-after">AFTER</span>
-                        </div>
-                        <span class="ba-divider" aria-hidden="true"></span>
+                        <img loading="lazy" decoding="async" width="300" height="225" class="ba-before" src="assets/images/1-home/finishedServices/FS9.webp" alt="Pool deck before: worn, stained concrete around the pool">
+                        <img loading="lazy" decoding="async" width="1400" height="1050" class="ba-after" src="assets/images/2-service/homeServices/pool.webp" srcset="assets/images/2-service/homeServices/pool-600.webp 600w, assets/images/2-service/homeServices/pool.webp 1400w" alt="Same pool deck after: new decorative flake coating" sizes="(max-width: 1023px) 100vw, 50vw">
+                        <span class="ba-tag ba-tag-before" aria-hidden="true">Before</span>
+                        <span class="ba-tag ba-tag-after" aria-hidden="true">After</span>
+                        <span class="ba-handle" aria-hidden="true"></span>
                         <input type="range" class="ba-range" min="0" max="100" value="50" aria-label="Pool deck: drag to compare before and after">
                     </div>
-                    <h3>Pool Deck Renovation</h3>
-                    <p>Flake coating over the original concrete pool deck</p>
-                </div>
-
-                <div class="ba-item" data-aos="fade-up" data-aos-delay="100">
+                    <figcaption><strong>Pool deck renovation.</strong> Flake coating over the original concrete pool deck.</figcaption>
+                </figure>
+                <figure class="ba-item" data-reveal>
                     <div class="ba-slider">
-                        <div class="ba-before">
-                            <img loading="lazy" decoding="async" width="300" height="225" src="assets/images/1-home/finishedServices/FS11.webp" alt="Garage before: bare, stained concrete floor">
-                            <span class="ba-label ba-label-before">BEFORE</span>
-                        </div>
-                        <div class="ba-after">
-                            <img loading="lazy" decoding="async" width="300" height="225" src="assets/images/1-home/finishedServices/FS1.webp" alt="Garage after: gray epoxy flake floor">
-                            <span class="ba-label ba-label-after">AFTER</span>
-                        </div>
-                        <span class="ba-divider" aria-hidden="true"></span>
+                        <img loading="lazy" decoding="async" width="300" height="225" class="ba-before" src="assets/images/1-home/finishedServices/FS11.webp" alt="Garage before: bare, stained concrete floor">
+                        <img loading="lazy" decoding="async" width="300" height="225" class="ba-after" src="assets/images/1-home/finishedServices/FS1.webp" alt="Garage after: gray epoxy flake floor">
+                        <span class="ba-tag ba-tag-before" aria-hidden="true">Before</span>
+                        <span class="ba-tag ba-tag-after" aria-hidden="true">After</span>
+                        <span class="ba-handle" aria-hidden="true"></span>
                         <input type="range" class="ba-range" min="0" max="100" value="50" aria-label="Garage floor: drag to compare before and after">
                     </div>
-                    <h3>Garage Floor Makeover</h3>
-                    <p>Epoxy flake system on a bare concrete garage</p>
-                </div>
+                    <figcaption><strong>Garage floor makeover.</strong> Epoxy flake system on a bare concrete garage.</figcaption>
+                </figure>
             </div>
-            <div class="text-center">
-                <a href="contact.html" class="btn btn-primary">Transform Your Floor Today</a>
-            </div>
+
+            <h3 class="gallery-title" data-reveal>More finished projects</h3>
+            <ul class="gallery" id="gallery" data-reveal-group>
+                <li class="g-wide" data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="601" height="451" src="assets/images/1-home/generalServices/epoxyGarageFloor.webp" alt="Home garage and driveway with a gray flake coating"></button></li>
+                <li class="g-tall" data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="1050" height="1400" src="assets/images/1-home/generalServices/polishedConcrete.webp" srcset="assets/images/1-home/generalServices/polishedConcrete-600.webp 600w, assets/images/1-home/generalServices/polishedConcrete.webp 1050w" alt="Polished concrete floor reflecting tall windows" sizes="(max-width: 767px) 50vw, 25vw"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="300" height="256" src="assets/images/1-home/finishedServices/FS7.webp" alt="Blue metallic epoxy floor in a laundromat"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="300" height="225" src="assets/images/1-home/finishedServices/FS2.webp" alt="Warehouse with a glossy gray epoxy floor"></button></li>
+                <li class="g-wide" data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="800" height="450" src="assets/images/2-service/businessServices/parkingPainting.webp" alt="Parking garage with gray epoxy and yellow safety lines"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="300" height="244" src="assets/images/1-home/finishedServices/FS5.webp" alt="White metallic epoxy floor with gray veins"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="300" height="251" src="assets/images/1-home/finishedServices/FS8.webp" alt="Marble-look metallic epoxy floor next to a staircase"></button></li>
+                <li class="g-wide" data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="1400" height="1050" src="assets/images/1-home/generalServices/floorPainting.webp" srcset="assets/images/1-home/generalServices/floorPainting-600.webp 600w, assets/images/1-home/generalServices/floorPainting.webp 1400w" alt="Warehouse with a freshly painted light gray floor" sizes="(max-width: 767px) 100vw, 50vw"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="300" height="220" src="assets/images/1-home/finishedServices/FS3.webp" alt="Exterior steps coated in dark gray"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="300" height="232" src="assets/images/1-home/finishedServices/FS4.webp" alt="Front walkway and entry steps coated in dark gray"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="300" height="220" src="assets/images/1-home/finishedServices/FS6.webp" alt="Glossy gray epoxy floor in a utility room"></button></li>
+                <li data-reveal><button type="button" class="g-item"><img loading="lazy" decoding="async" width="753" height="478" src="assets/images/1-home/generalServices/polyAsparticPoolDeck.webp" alt="Screened pool deck with a beige polyaspartic flake coating"></button></li>
+            </ul>
         </div>
+
+        <dialog class="lightbox" id="lightbox" aria-label="Project photo">
+            <figure class="lightbox-figure">
+                <img loading="lazy" decoding="async" class="lightbox-img" src="data:," alt="">
+                <figcaption class="lightbox-caption"></figcaption>
+            </figure>
+            <button type="button" class="lightbox-btn lightbox-close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#x"></use></svg></button>
+            <button type="button" class="lightbox-btn lightbox-prev" aria-label="Previous photo"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#chevron-left"></use></svg></button>
+            <button type="button" class="lightbox-btn lightbox-next" aria-label="Next photo"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#chevron-right"></use></svg></button>
+            <p class="lightbox-count" aria-live="polite"></p>
+        </dialog>
     </section>
 
-    <!-- Color & Finish Options -->
-    <section class="color-options">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Customize Your Floor</span>
-                <h2>Color & Finish Collections</h2>
-                <p>Choose from our wide range of premium finishes and colors</p>
+    <!-- Colors: a sample board. Pick a chip to see it large (js/home.js). -->
+    <section class="section colors" id="colors" aria-labelledby="colors-title">
+        <div class="container-wide">
+            <div class="section-head" data-reveal>
+                <h2 id="colors-title" class="title"><span class="sans">Customize your floor</span> <em>Color &amp; finish collections</em></h2>
+                <p>Choose from our wide range of premium finishes and colors.</p>
             </div>
-
-            <!-- Flake Finishes -->
-            <div class="color-category">
-                <h3 class="category-title">Popular Flake Finishes</h3>
-                <div class="color-grid">
-                    <div class="color-item" data-aos="zoom-in">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/wombat.webp" alt="Wombat">
-                        <div class="color-name">Wombat</div>
+            <div class="sample-board" data-reveal>
+                <figure class="sample-preview">
+                    <div class="sample-preview-frame">
+                        <img loading="lazy" decoding="async" id="samplePreviewImg" src="assets/images/1-home/mostPopular/wombat.webp" alt="Wombat flake finish sample" width="500" height="250" data-no-srcset>
+                        <span id="samplePreviewSolid" class="sample-solid" hidden></span>
                     </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="50">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/marlin.webp" alt="Marlin">
-                        <div class="color-name">Marlin</div>
+                    <figcaption><span id="samplePreviewName">Wombat</span> <span id="samplePreviewGroup">Flake finish</span></figcaption>
+                </figure>
+                <div class="sample-groups">
+                    <div class="sample-group">
+                        <h3>Popular flake finishes</h3>
+                        <ul class="swatches">
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/wombat.webp" data-name="Wombat" data-group="Flake finish" aria-pressed="true"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/wombat-64.webp" alt="" width="32" height="32" data-no-srcset><span>Wombat</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/marlin.webp" data-name="Marlin" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/marlin-64.webp" alt="" width="32" height="32" data-no-srcset><span>Marlin</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/bengal.webp" data-name="Bengal" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/bengal-64.webp" alt="" width="32" height="32" data-no-srcset><span>Bengal</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/slateStone.webp" data-name="Slate Stone" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/slateStone-64.webp" alt="" width="32" height="32" data-no-srcset><span>Slate Stone</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/lynx.webp" data-name="Lynx" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/lynx-64.webp" alt="" width="32" height="32" data-no-srcset><span>Lynx</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/outback.webp" data-name="Outback" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/outback-64.webp" alt="" width="32" height="32" data-no-srcset><span>Outback</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/pheasant.webp" data-name="Pheasant" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/pheasant-64.webp" alt="" width="32" height="32" data-no-srcset><span>Pheasant</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/creekBed.webp" data-name="Creek Bed" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/creekBed-64.webp" alt="" width="32" height="32" data-no-srcset><span>Creek Bed</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/pantherPride.webp" data-name="Panther Pride" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/pantherPride-64.webp" alt="" width="32" height="32" data-no-srcset><span>Panther Pride</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/cabinFever.webp" data-name="Cabin Fever" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/cabinFever-64.webp" alt="" width="32" height="32" data-no-srcset><span>Cabin Fever</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/shoreline.webp" data-name="Shoreline" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/shoreline-64.webp" alt="" width="32" height="32" data-no-srcset><span>Shoreline</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/crimson.webp" data-name="Crimson" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/crimson-64.webp" alt="" width="32" height="32" data-no-srcset><span>Crimson</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/corduroy.webp" data-name="Corduroy" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/corduroy-64.webp" alt="" width="32" height="32" data-no-srcset><span>Corduroy</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/cherokee.webp" data-name="Cherokee" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/cherokee-64.webp" alt="" width="32" height="32" data-no-srcset><span>Cherokee</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/domino.webp" data-name="Domino" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/domino-64.webp" alt="" width="32" height="32" data-no-srcset><span>Domino</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/firehouse.webp" data-name="Firehouse" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/firehouse-64.webp" alt="" width="32" height="32" data-no-srcset><span>Firehouse</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/shout.webp" data-name="Shout" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/shout-64.webp" alt="" width="32" height="32" data-no-srcset><span>Shout</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/mostPopular/stonewash.webp" data-name="Stone Wash" data-group="Flake finish" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/stonewash-64.webp" alt="" width="32" height="32" data-no-srcset><span>Stone Wash</span></button></li>
+                        </ul>
                     </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="100">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/bengal.webp" alt="Bengal">
-                        <div class="color-name">Bengal</div>
+                    <div class="sample-group">
+                        <h3>Micro granite chip colors</h3>
+                        <ul class="swatches">
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/microGranite/carlsbad.webp" data-name="Carlsbad" data-group="Micro granite" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/carlsbad-64.webp" alt="" width="32" height="32" data-no-srcset><span>Carlsbad</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/microGranite/dolphinGrey.webp" data-name="Dolphin Grey" data-group="Micro granite" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/dolphinGrey-64.webp" alt="" width="32" height="32" data-no-srcset><span>Dolphin Grey</span></button></li>
+                            <li><button type="button" class="swatch" data-src="assets/images/1-home/microGranite/yosemite.webp" data-name="Yosemite" data-group="Micro granite" aria-pressed="false"><img loading="lazy" decoding="async" src="assets/images/1-home/swatches/yosemite-64.webp" alt="" width="32" height="32" data-no-srcset><span>Yosemite</span></button></li>
+                        </ul>
                     </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="150">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/slateStone.webp" alt="Slate Stone">
-                        <div class="color-name">Slate Stone</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="200">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/lynx.webp" alt="Lynx">
-                        <div class="color-name">Lynx</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="250">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/outback.webp" alt="Outback">
-                        <div class="color-name">Outback</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="300">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/pheasant.webp" alt="Pheasant">
-                        <div class="color-name">Pheasant</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="350">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/creekBed.webp" alt="Creek Bed">
-                        <div class="color-name">Creek Bed</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="400">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/pantherPride.webp" alt="Panther Pride">
-                        <div class="color-name">Panther Pride</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="450">
-                        <img loading="lazy" decoding="async" width="300" height="173" src="assets/images/1-home/mostPopular/cabinFever.webp" alt="Cabin Fever">
-                        <div class="color-name">Cabin Fever</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="500">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/shoreline.webp" alt="Shoreline">
-                        <div class="color-name">Shoreline</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="550">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/crimson.webp" alt="Crimson">
-                        <div class="color-name">Crimson</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="600">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/corduroy.webp" alt="Corduroy">
-                        <div class="color-name">Corduroy</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="650">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/cherokee.webp" alt="Cherokee">
-                        <div class="color-name">Cherokee</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="700">
-                        <img loading="lazy" decoding="async" width="500" height="250" src="assets/images/1-home/mostPopular/domino.webp" alt="Domino">
-                        <div class="color-name">Domino</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="750">
-                        <img loading="lazy" decoding="async" width="300" height="179" src="assets/images/1-home/mostPopular/firehouse.webp" alt="Firehouse">
-                        <div class="color-name">Firehouse</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="800">
-                        <img loading="lazy" decoding="async" width="300" height="195" src="assets/images/1-home/mostPopular/shout.webp" alt="Shout">
-                        <div class="color-name">Shout</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="850">
-                        <img loading="lazy" decoding="async" width="295" height="169" src="assets/images/1-home/mostPopular/stonewash.webp" alt="Stone Wash">
-                        <div class="color-name">Stone Wash</div>
+                    <div class="sample-group">
+                        <h3>Solid epoxy colors</h3>
+                        <ul class="swatches">
+                            <li><button type="button" class="swatch" data-color="#0d0d0d" data-name="Black" data-group="Solid epoxy color" aria-pressed="false"><span class="swatch-dot" style="--swatch: #0d0d0d"></span><span>Black</span></button></li>
+                            <li><button type="button" class="swatch" data-color="#555755" data-name="Gray" data-group="Solid epoxy color" aria-pressed="false"><span class="swatch-dot" style="--swatch: #555755"></span><span>Gray</span></button></li>
+                            <li><button type="button" class="swatch" data-color="#f7f7f5" data-name="White" data-group="Solid epoxy color" aria-pressed="false"><span class="swatch-dot" style="--swatch: #f7f7f5"></span><span>White</span></button></li>
+                        </ul>
                     </div>
                 </div>
             </div>
-
-            <!-- Micro Granite -->
-            <div class="color-category">
-                <h3 class="category-title">Micro Granite Chip Colors</h3>
-                <div class="color-grid micro-granite">
-                    <div class="color-item" data-aos="zoom-in">
-                        <img loading="lazy" decoding="async" width="254" height="170" src="assets/images/1-home/microGranite/carlsbad.webp" alt="Carlsbad">
-                        <div class="color-name">Carlsbad</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="50">
-                        <img loading="lazy" decoding="async" width="254" height="170" src="assets/images/1-home/microGranite/dolphinGrey.webp" alt="Dolphin Grey">
-                        <div class="color-name">Dolphin Grey</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="100">
-                        <img loading="lazy" decoding="async" width="254" height="170" src="assets/images/1-home/microGranite/yosemite.webp" alt="Yosemite">
-                        <div class="color-name">Yosemite</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Solid Colors -->
-            <div class="color-category">
-                <h3 class="category-title">Solid Epoxy Colors</h3>
-                <div class="color-grid solid-colors">
-                    <div class="color-item" data-aos="zoom-in">
-                        <img loading="lazy" decoding="async" width="254" height="170" src="assets/images/1-home/solidColors/black.webp" alt="Black">
-                        <div class="color-name">Black</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="50">
-                        <img loading="lazy" decoding="async" width="254" height="170" src="assets/images/1-home/solidColors/gray.webp" alt="Gray">
-                        <div class="color-name">Gray</div>
-                    </div>
-                    <div class="color-item" data-aos="zoom-in" data-aos-delay="100">
-                        <img loading="lazy" decoding="async" width="254" height="170" src="assets/images/1-home/solidColors/white.webp" alt="White">
-                        <div class="color-name">White</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center" style="margin-top: 40px;">
-                <p class="color-note">Can't find the perfect color? We offer custom color matching!</p>
-                <a href="contact.html" class="btn btn-secondary">Discuss Custom Options</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Installation Process -->
-    <section class="installation-process">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Our Process</span>
-                <h2>Professional Installation Steps</h2>
-                <p>Quality results through our proven 4-layer epoxy flake procedure</p>
-            </div>
-            <div class="process-image">
-                <img loading="lazy" decoding="async" width="1400" height="844" src="assets/images/2-service/epoxyProcedure.webp" srcset="assets/images/2-service/epoxyProcedure-600.webp 600w, assets/images/2-service/epoxyProcedure.webp 1400w" sizes="(max-width: 768px) 100vw, 600px" alt="Epoxy Installation Process">
-            </div>
-            <div class="process-steps">
-                <div class="step" data-aos="fade-right">
-                    <div class="step-number">01</div>
-                    <div class="step-content">
-                        <h4>Surface Preparation</h4>
-                        <p>Thorough cleaning and grinding to ensure optimal adhesion</p>
-                    </div>
-                </div>
-                <div class="step" data-aos="fade-right" data-aos-delay="100">
-                    <div class="step-number">02</div>
-                    <div class="step-content">
-                        <h4>Primer Application</h4>
-                        <p>High-quality primer coat for maximum durability</p>
-                    </div>
-                </div>
-                <div class="step" data-aos="fade-right" data-aos-delay="200">
-                    <div class="step-number">03</div>
-                    <div class="step-content">
-                        <h4>Base & Flake Layer</h4>
-                        <p>Application of colored base and decorative flakes</p>
-                    </div>
-                </div>
-                <div class="step" data-aos="fade-right" data-aos-delay="300">
-                    <div class="step-number">04</div>
-                    <div class="step-content">
-                        <h4>Topcoat Sealing</h4>
-                        <p>Premium clear coat for protection and shine</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item" data-aos="fade-up">
-                    <div class="stat-number">1533+</div>
-                    <div class="stat-label">Projects Completed</div>
-                </div>
-                <div class="stat-item" data-aos="fade-up" data-aos-delay="100">
-                    <div class="stat-number">1131+</div>
-                    <div class="stat-label">Clients</div>
-                </div>
-                <div class="stat-item" data-aos="fade-up" data-aos-delay="200">
-                    <div class="stat-number">16+</div>
-                    <div class="stat-label">Employees</div>
-                </div>
-                <div class="stat-item" data-aos="fade-up" data-aos-delay="300">
-                    <div class="stat-number">9+</div>
-                    <div class="stat-label">Years of Experience</div>
-                </div>
+            <div class="colors-note" data-reveal>
+                <p>Can't find the perfect color? We offer custom color matching.</p>
+                <a href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20to%20discuss%20a%20custom%20color." class="btn btn-outline" target="_blank" rel="noopener">Discuss custom options</a>
             </div>
         </div>
     </section>
 
     <!-- Testimonials -->
-    <section class="testimonials">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Client Testimonials</span>
-                <h2>What People Say</h2>
-                <p>Feedback from our customers</p>
+    <section class="section testimonials" id="testimonials" aria-labelledby="testimonials-title">
+        <div class="container-wide">
+            <div class="section-head" data-reveal>
+                <h2 id="testimonials-title" class="title"><span class="sans">Client testimonials</span> <em>What people say</em></h2>
+                <p>Feedback from our customers.</p>
             </div>
-            <div class="testimonials-slider">
-                <div class="testimonial-item active">
-                    <div class="testimonial-content">
-                        <div class="quote-icon" aria-hidden="true">"</div>
-                        <p>I received very good service from the Ale Floors team. I tried other companies, but the deadline for installation was too long. Now we have a fully renovated and safe pool area.</p>
-                        <div class="testimonial-author">
-                            <img loading="lazy" decoding="async" width="299" height="269" src="assets/images/testimonials/abella-smith.webp" alt="Abella Smith">
-                            <div>
-                                <h5>Abella Smith</h5>
-                                <span>Manager</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial-item">
-                    <div class="testimonial-content">
-                        <div class="quote-icon" aria-hidden="true">"</div>
-                        <p>What I look for most in a company I hire is service and professionalism. I hired Ale Floors because of its good reputation and market experience. I liked the deadline to do the work.</p>
-                        <div class="testimonial-author">
-                            <img loading="lazy" decoding="async" width="273" height="229" src="assets/images/testimonials/mrs-ransom.webp" alt="Mrs. Ransom">
-                            <div>
-                                <h5>Mrs. Ransom</h5>
-                                <span>Sales Manager</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial-item">
-                    <div class="testimonial-content">
-                        <div class="quote-icon" aria-hidden="true">"</div>
-                        <p>Thanks to Ale Floors, I have a garage with a brand new floor. Now I can do my work. After retirement, the area I like most in the house is the garage, where I do my crafts.</p>
-                        <div class="testimonial-author">
-                            <img loading="lazy" decoding="async" width="287" height="290" src="assets/images/testimonials/joel-dawson.webp" alt="Joel Dawson">
-                            <div>
-                                <h5>Joel Dawson</h5>
-                                <span>Homeowner</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="testimonial-nav">
-                <button type="button" class="testimonial-prev" aria-label="Previous testimonial">‹</button>
-                <button type="button" class="testimonial-next" aria-label="Next testimonial">›</button>
+            <div class="quotes" data-reveal-group>
+                <figure class="quote" data-reveal>
+                    <blockquote><p>I received very good service from the Ale Floors team. I tried other companies, but the deadline for installation was too long. Now we have a fully renovated and safe pool area.</p></blockquote>
+                    <figcaption>
+                        <img loading="lazy" decoding="async" src="assets/images/testimonials/abella-smith.webp" alt="" width="299" height="269">
+                        <span><strong>Abella Smith</strong> Manager</span>
+                    </figcaption>
+                </figure>
+                <figure class="quote" data-reveal>
+                    <blockquote><p>What I look for most in a company I hire is service and professionalism. I hired Ale Floors because of its good reputation and market experience. I liked the deadline to do the work.</p></blockquote>
+                    <figcaption>
+                        <img loading="lazy" decoding="async" src="assets/images/testimonials/mrs-ransom.webp" alt="" width="273" height="229">
+                        <span><strong>Mrs. Ransom</strong> Sales Manager</span>
+                    </figcaption>
+                </figure>
+                <figure class="quote" data-reveal>
+                    <blockquote><p>Thanks to Ale Floors, I have a garage with a brand new floor. Now I can do my work. After retirement, the area I like most in the house is the garage, where I do my crafts.</p></blockquote>
+                    <figcaption>
+                        <img loading="lazy" decoding="async" src="assets/images/testimonials/joel-dawson.webp" alt="" width="287" height="290">
+                        <span><strong>Joel Dawson</strong> Homeowner</span>
+                    </figcaption>
+                </figure>
             </div>
         </div>
     </section>
 
-    </div>
+    <!-- FAQ (questions from the contact page; tools/build.py turns them into FAQ structured data) -->
+    <section class="section faq" id="faq" aria-labelledby="faq-title">
+        <div class="container-wide faq-layout">
+            <div class="faq-head" data-reveal>
+                <h2 id="faq-title" class="title"><span class="sans">Common questions</span> <em>Frequently asked questions</em></h2>
+                <p>Still unsure about something? Send us a message. We respond within 24 hours.</p>
+                <a href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I%20have%20a%20question." class="btn btn-outline" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#whatsapp"></use></svg><span>Ask on WhatsApp</span></a>
+            </div>
+            <div class="faq-list" data-reveal>
+                <details class="faq-item" open>
+                    <summary>How long does installation take?</summary>
+                    <div class="faq-answer"><p>Most residential projects take 2-3 days. Commercial projects vary based on size and complexity.</p></div>
+                </details>
+                <details class="faq-item">
+                    <summary>Do you offer free quotes?</summary>
+                    <div class="faq-answer"><p>Yes! All quotes and consultations are completely free with no obligation.</p></div>
+                </details>
+                <details class="faq-item">
+                    <summary>What areas do you serve?</summary>
+                    <div class="faq-answer"><p>We serve Orlando, Tampa, Daytona Beach, and surrounding areas throughout Florida.</p></div>
+                </details>
+                <details class="faq-item">
+                    <summary>Is epoxy flooring durable?</summary>
+                    <div class="faq-answer"><p>Absolutely! Our epoxy floors are highly durable, resistant to impacts, chemicals, and daily wear.</p></div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location -->
+    <section class="section location" id="location" aria-labelledby="location-title">
+        <div class="container-wide">
+            <div class="section-head" data-reveal>
+                <h2 id="location-title" class="title"><span class="sans">Where we work</span> <em>Proudly serving Central Florida</em></h2>
+                <p>Professional epoxy flooring services throughout the region.</p>
+            </div>
+            <div class="map-card" data-reveal>
+                <iframe class="map-frame" src="https://www.google.com/maps?q=13581+Fordwell+Dr,+Orlando,+FL+32828&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map showing Ale Floors at 13581 Fordwell Dr, Orlando, FL 32828"></iframe>
+                <div class="map-info">
+                    <h3>Ale Floors</h3>
+                    <dl>
+                        <div><dt>Address</dt><dd>13581 Fordwell Dr<br>Orlando, FL 32828</dd></div>
+                        <div><dt>Hours</dt><dd>Monday – Saturday<br>8:00 AM – 6:00 PM</dd></div>
+                        <div><dt>Service areas</dt><dd>Orlando, Tampa, Daytona Beach and surrounding areas</dd></div>
+                    </dl>
+                    <div class="map-actions">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=13581+Fordwell+Dr,+Orlando,+FL+32828" class="btn btn-primary btn-small" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#map-pin"></use></svg><span>Open in Google Maps</span></a>
+                        <a href="tel:+13479986695" class="btn btn-outline btn-small"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#phone"></use></svg><span>Call us</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     </main>
 
@@ -591,6 +485,7 @@
     </nav>
 
     <script src="js/script.js" defer></script>
+    <script src="js/home.js" defer></script>
     <script type="module" src="js/hero-3d.js"></script>
 </body>
 </html>
