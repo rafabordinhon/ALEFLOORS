@@ -114,6 +114,79 @@
         });
     }
 
+    // ========================================
+    // SHOWROOM HERO: turns scrolling through the tall hero into progress (0..1),
+    // picks the active room, swaps captions and (without 3D) the still images.
+    // Room changes happen at the same points as the camera stops in js/hero-3d.js.
+    // ========================================
+    function initShowroom() {
+        const hero = $('#showroom');
+        if (!hero) return;
+        const panels = $$('.room-panel', hero);
+        const stills = $$('.hero-still', hero);
+        const navItems = $$('.room-nav-item', hero);
+        const ROOM_AT = [0, 0.28, 0.75];          // progress where each room starts
+        const SCROLL_TO = [0, 0.52, 0.97];        // where the room-nav buttons take you
+        let room = -1;
+        let ticking = false;
+
+        const progress = () => {
+            const range = hero.offsetHeight - window.innerHeight;
+            if (range <= 0) return 0;
+            return Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / range));
+        };
+
+        // stills for rooms 2-3 are only downloaded when the 3D scene is not running
+        const loadStill = (i) => {
+            const pic = stills[i];
+            if (!pic || document.documentElement.classList.contains('has-3d')) return;
+            $$('[data-srcset]', pic).forEach((source) => { source.srcset = source.dataset.srcset; source.removeAttribute('data-srcset'); });
+            const img = $('img[data-src]', pic);
+            if (img) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
+        };
+
+        const setRoom = (next) => {
+            if (next === room) return;
+            room = next;
+            panels.forEach((panel) => {
+                const active = Number(panel.dataset.room) === room;
+                panel.classList.toggle('is-active', active);
+                panel.inert = !active;       // hidden captions can't take keyboard focus
+            });
+            stills.forEach((pic, i) => pic.classList.toggle('is-active', i === room));
+            navItems.forEach((item, i) => {
+                item.classList.toggle('is-active', i === room);
+                item.classList.toggle('is-past', i < room);
+                item.setAttribute('aria-current', i === room ? 'true' : 'false');
+            });
+        };
+
+        const update = () => {
+            ticking = false;
+            const p = progress();
+            setRoom(p >= ROOM_AT[2] ? 2 : p >= ROOM_AT[1] ? 1 : 0);
+            if (p > 0.12) loadStill(1);       // a little ahead, so the image is ready
+            if (p > 0.55) loadStill(2);
+        };
+
+        window.addEventListener('scroll', () => {
+            if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+        }, { passive: true });
+        window.addEventListener('resize', update);
+
+        navItems.forEach((item, i) => {
+            item.addEventListener('click', () => {
+                const range = hero.offsetHeight - window.innerHeight;
+                const top = hero.getBoundingClientRect().top + window.scrollY + range * SCROLL_TO[i];
+                const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
+            });
+        });
+
+        update();
+    }
+
     initSampleBoard();
     initLightbox();
+    initShowroom();
 })();

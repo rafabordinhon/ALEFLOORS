@@ -6,7 +6,7 @@
     <title>Ale Floors - Floor Covering Specialist | Epoxy, Polished Concrete &amp; More</title>
     <meta name="description" content="Professional epoxy flooring services in Orlando, Tampa, and Daytona Beach. Specializing in metallic epoxy, garage floors, pool decks, and polished concrete.">
     <link rel="canonical" href="https://alefloors.netlify.app/">
-    <meta name="theme-color" content="#121316">
+    <meta name="theme-color" content="#17130f">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ale Floors">
     <meta property="og:title" content="Ale Floors - Floor Covering Specialist | Epoxy, Polished Concrete &amp; More">
@@ -57,30 +57,56 @@
 
     <main id="main">
 
-    <!-- Hero: 3D floor sample (js/hero-3d.js) over a static fallback image -->
-    <section class="hero" aria-labelledby="hero-title" data-header-dark>
-        <div class="hero-media" aria-hidden="true">
-            <picture>
-                <source media="(max-width: 1023px)" srcset="assets/images/hero/hero-fallback-mobile.webp" width="780" height="1688">
-                <img class="hero-fallback" src="assets/images/hero/hero-fallback.webp" alt="" width="1600" height="1000" fetchpriority="high" data-no-srcset>
+    <!-- Hero: a walk through a 3-room showroom (js/hero-3d.js). The section is tall and the
+         stage sticks to the screen while the visitor scrolls; js/home.js turns the scroll into
+         progress (rooms, captions). Without 3D, three still renders of the rooms crossfade. -->
+    <section class="hero" id="showroom" aria-labelledby="hero-title" data-header-dark>
+        <div class="hero-stage">
+            <div class="hero-media" aria-hidden="true">
+            <picture class="hero-still is-active" data-room="0">
+                <source media="(max-width: 1023px)" srcset="assets/images/hero/showroom-1-mobile.webp" width="780" height="1688">
+                <img src="assets/images/hero/showroom-1.webp" alt="" width="1600" height="1000" fetchpriority="high" data-no-srcset>
             </picture>
-            <canvas class="hero-canvas" id="heroCanvas"></canvas>
-            <ol class="hero-layers" id="heroLayers">
-                <li>Topcoat sealing</li>
-                <li>Base &amp; flake layer</li>
-                <li>Primer</li>
-                <li>Prepared concrete</li>
-            </ol>
-        </div>
-        <div class="hero-inner container-wide">
-            <div class="hero-copy">
-                <h1 id="hero-title" class="hero-title" data-split data-split-delay="150"><span class="sans">Epoxy floors,</span> <em>built layer by layer.</em></h1>
-                <p class="hero-lead" data-reveal data-reveal-delay="550">Floor covering specialist for homes and businesses in Orlando, Tampa and Daytona Beach. Metallic, flake and 3D epoxy, pool decks, polished concrete and floor painting.</p>
-                <div class="hero-actions" data-reveal data-reveal-delay="700">
-                    <a class="btn btn-primary" href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20a%20free%20quote." target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#whatsapp"></use></svg><span>Get a Free Quote</span></a>
-                    <a class="btn btn-ghost" href="#work">See Our Work</a>
+            <picture class="hero-still" data-room="1">
+                <source media="(max-width: 1023px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="assets/images/hero/showroom-2-mobile.webp" width="780" height="1688">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="assets/images/hero/showroom-2.webp" alt="" width="1600" height="1000" loading="eager" data-no-srcset>
+            </picture>
+            <picture class="hero-still" data-room="2">
+                <source media="(max-width: 1023px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="assets/images/hero/showroom-3-mobile.webp" width="780" height="1688">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="assets/images/hero/showroom-3.webp" alt="" width="1600" height="1000" loading="eager" data-no-srcset>
+            </picture>
+                <canvas class="hero-canvas" id="heroCanvas"></canvas>
+            </div>
+
+            <div class="hero-inner container-wide room-panel is-active" data-room="0">
+                <div class="hero-copy">
+                    <h1 id="hero-title" class="hero-title" data-split data-split-delay="150"><span class="sans">Epoxy floors,</span> <em>built layer by layer.</em></h1>
+                    <p class="hero-lead" data-reveal data-reveal-delay="550">Floor covering specialist for homes and businesses in Orlando, Tampa and Daytona Beach. Metallic, flake and 3D epoxy, pool decks, polished concrete and floor painting.</p>
+                    <div class="hero-actions" data-reveal data-reveal-delay="700">
+                        <a class="btn btn-primary" href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20a%20free%20quote." target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#whatsapp"></use></svg><span>Get a Free Quote</span></a>
+                        <a class="btn btn-ghost" href="#work">See Our Work</a>
+                    </div>
                 </div>
             </div>
+
+            <div class="room-caption room-panel" data-room="1">
+                <p class="room-name">Epoxy Garage Floor</p>
+                <p>Flake Epoxy is the most common solution, widely used in garages and common areas. Non-slip and resistant, perfect for outdoor areas with sun, rain, and heavy weights.</p>
+                <a class="btn btn-ghost btn-small" href="service.html#garage">Garage floors</a>
+            </div>
+
+            <div class="room-caption room-panel" data-room="2">
+                <p class="room-name">Polished Concrete</p>
+                <p>Great value for money, can be applied directly to concrete. Perfect for home or business with great aesthetics and easy to clean.</p>
+                <a class="btn btn-ghost btn-small" href="service.html#polished">Polished concrete</a>
+            </div>
+
+            <!-- which floor is on screen; each item scrolls to its room -->
+            <nav class="room-nav" aria-label="Showroom floors">
+                <button type="button" class="room-nav-item is-active" data-room="0"><span class="room-nav-bar" aria-hidden="true"></span>Metallic epoxy</button>
+                <button type="button" class="room-nav-item" data-room="1"><span class="room-nav-bar" aria-hidden="true"></span>Epoxy flake</button>
+                <button type="button" class="room-nav-item" data-room="2"><span class="room-nav-bar" aria-hidden="true"></span>Polished concrete</button>
+            </nav>
         </div>
     </section>
 

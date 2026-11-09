@@ -3,20 +3,28 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Hero — dark, cinematic; the 3D floor sample sits on the right (desktop)
-   or at the top (phones). Text always sits on a gradient so it stays readable.
+   Hero — a walk through a warm-lit, three-room showroom. The section is tall
+   (scroll length) and .hero-stage sticks to the screen; js/home.js sets the
+   active room, js/hero-3d.js moves the camera.
    -------------------------------------------------------------------------- */
 .hero {
     position: relative;
-    isolation: isolate;
-    display: flex;
-    min-height: 100vh;
-    min-height: 100svh;
-    overflow: hidden;
-    background:
-        radial-gradient(90% 70% at 72% 42%, #2a2c31 0%, rgba(42, 44, 49, 0) 60%),
-        var(--night);
+    background: var(--night);
     color: var(--on-dark);
+}
+
+/* the walk-through needs scrolling room (only with JS; without it the hero is one screen) */
+.js .hero {
+    height: 260vh;
+}
+
+.hero-stage {
+    position: sticky;
+    top: 0;
+    isolation: isolate;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
 }
 
 .hero-media {
@@ -25,7 +33,8 @@
     z-index: -1;
 }
 
-.hero-fallback,
+.hero-still,
+.hero-still img,
 .hero-canvas {
     position: absolute;
     inset: 0;
@@ -33,15 +42,23 @@
     height: 100%;
 }
 
-.hero-fallback {
+.hero-still img {
     object-fit: cover;
     object-position: 50% 0;
-    transition: opacity 600ms var(--ease-out);
+}
+
+.hero-still {
+    opacity: 0;
+    transition: opacity 700ms var(--ease-out);
+}
+
+.hero-still.is-active {
+    opacity: 1;
 }
 
 .hero-canvas {
     opacity: 0;
-    transition: opacity 600ms var(--ease-out);
+    transition: opacity 900ms var(--ease-out);
 }
 
 /* js/hero-3d.js adds html.has-3d after the first frame is drawn */
@@ -49,27 +66,41 @@
     opacity: 1;
 }
 
-.has-3d .hero-fallback {
+.has-3d .hero-still {
     opacity: 0;
 }
 
-/* readability: night fades in from the text side */
+/* readability: a soft warm-dark veil where the text sits, light elsewhere */
 .hero-media::after {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
     background:
-        linear-gradient(to top, var(--night) 0%, rgba(18, 19, 22, 0.86) 34%, rgba(18, 19, 22, 0) 62%),
-        linear-gradient(to bottom, rgba(18, 19, 22, 0.55) 0%, rgba(18, 19, 22, 0) 22%);
+        linear-gradient(to top, rgba(20, 16, 13, 0.92) 0%, rgba(20, 16, 13, 0.55) 32%, rgba(20, 16, 13, 0) 58%),
+        linear-gradient(to bottom, rgba(20, 16, 13, 0.55) 0%, rgba(20, 16, 13, 0) 18%);
+}
+
+/* panels: one per room, crossfading */
+.room-panel {
+    transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out), visibility 0s linear 0s;
+}
+
+.js .room-panel:not(.is-active) {
+    opacity: 0;
+    transform: translateY(16px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out), visibility 0s linear 300ms;
 }
 
 .hero-inner {
-    position: relative;
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: flex-end;
     padding-top: calc(var(--header-h) + 32px);
-    padding-bottom: clamp(40px, 8vh, 88px);
+    padding-bottom: clamp(88px, 14vh, 140px);
 }
 
 .hero-copy {
@@ -82,6 +113,7 @@
     font-weight: 400;
     line-height: 0.98;
     letter-spacing: -0.025em;
+    text-shadow: 0 2px 30px rgba(20, 16, 13, 0.35);
 }
 
 .hero-title .sans {
@@ -92,7 +124,6 @@
     font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.1;
-    color: var(--on-dark);
 }
 
 .hero-title em {
@@ -106,7 +137,7 @@
     margin-top: 24px;
     font-size: var(--fs-lead);
     line-height: 1.55;
-    color: var(--on-dark-muted);
+    color: #d6d0c8;
 }
 
 .hero-actions {
@@ -122,69 +153,136 @@
     }
 }
 
-/* layer labels: positioned next to each 3D layer by js/hero-3d.js (desktop only) */
-.hero-layers {
+/* captions for rooms 2 and 3: a glass card */
+.room-caption {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: clamp(88px, 14vh, 140px);
+    max-width: 30rem;
+    padding: 24px 26px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-lg);
+    background: rgba(28, 23, 19, 0.45);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.room-caption .room-name {
+    font-family: var(--font-serif);
+    font-size: clamp(1.9rem, 1.5rem + 1.4vw, 2.6rem);
+    font-style: italic;
+    line-height: 1.05;
+    color: var(--on-dark);
+}
+
+.room-caption p:not(.room-name) {
+    margin: 12px 0 20px;
+    color: #d6d0c8;
+    font-size: var(--fs-small);
+    line-height: 1.55;
+}
+
+/* without JS the extra captions would stack on top of the hero text */
+html:not(.js) .room-caption {
+    display: none;
+}
+
+/* which floor is on screen */
+.room-nav {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 24px;
+    display: flex;
+    gap: 8px;
+}
+
+.room-nav-item {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 6px 0;
+    border: 0;
+    background: none;
+    color: rgba(238, 239, 235, 0.55);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: color var(--dur) ease;
+}
+
+.room-nav-bar {
+    position: relative;
+    display: block;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(238, 239, 235, 0.22);
+}
+
+.room-nav-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--sand);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 500ms var(--ease-out);
+}
+
+.room-nav-item.is-active {
+    color: var(--on-dark);
+}
+
+.room-nav-item.is-active .room-nav-bar::after,
+.room-nav-item.is-past .room-nav-bar::after {
+    transform: scaleX(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .room-nav-item:hover {
+        color: var(--on-dark);
+    }
+}
+
+html:not(.js) .room-nav {
     display: none;
 }
 
 @media (min-width: 1024px) {
-    .hero {
-        background:
-            radial-gradient(60% 75% at 74% 48%, #2b2d33 0%, rgba(43, 45, 51, 0) 65%),
-            var(--night);
-    }
-
     .hero-media::after {
         background:
-            linear-gradient(to right, var(--night) 0%, rgba(18, 19, 22, 0.82) 30%, rgba(18, 19, 22, 0) 56%),
-            linear-gradient(to bottom, rgba(18, 19, 22, 0.5) 0%, rgba(18, 19, 22, 0) 20%);
+            linear-gradient(to right, rgba(20, 16, 13, 0.82) 0%, rgba(20, 16, 13, 0.45) 30%, rgba(20, 16, 13, 0) 55%),
+            linear-gradient(to top, rgba(20, 16, 13, 0.6) 0%, rgba(20, 16, 13, 0) 30%),
+            linear-gradient(to bottom, rgba(20, 16, 13, 0.5) 0%, rgba(20, 16, 13, 0) 18%);
     }
 
     .hero-inner {
         align-items: center;
-        padding-bottom: 48px;
-    }
-
-    .hero-fallback {
-        object-position: 50% 50%;
+        padding-bottom: 96px;
     }
 
     .hero-copy {
-        max-width: min(36rem, 44vw);
+        max-width: min(36rem, 46vw);
     }
 
-    .has-3d .hero-layers {
-        display: block;
-        position: absolute;
-        inset: 0;
-        list-style: none;
-        padding: 0;
-        pointer-events: none;
+    .hero-still img {
+        object-position: 50% 50%;
     }
 
-    .hero-layers li {
-        position: absolute;
-        left: 0;
-        top: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: var(--fs-xs);
-        font-weight: 500;
-        letter-spacing: 0.01em;
-        color: var(--on-dark-muted);
-        white-space: nowrap;
-        opacity: 0;
-        will-change: transform, opacity;
+    .room-caption {
+        left: auto;
+        right: max(var(--gutter), calc((100vw - var(--container-wide)) / 2));
+        bottom: 104px;
     }
 
-    /* hairline that points at the layer */
-    .hero-layers li::before {
-        content: "";
-        width: 32px;
-        height: 1px;
-        background: currentColor;
-        opacity: 0.6;
+    .room-nav {
+        left: max(var(--gutter), calc((100vw - var(--container-wide)) / 2));
+        right: auto;
+        width: 420px;
     }
 }
 
@@ -320,7 +418,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(to top, rgba(18, 19, 22, 0.75) 0%, rgba(18, 19, 22, 0.2) 45%, rgba(18, 19, 22, 0) 70%);
+    background: linear-gradient(to top, rgba(23, 19, 15, 0.75) 0%, rgba(23, 19, 15, 0.2) 45%, rgba(23, 19, 15, 0) 70%);
 }
 
 /* glass panel with the text */
@@ -328,7 +426,7 @@
     padding: 18px 20px;
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 14px;
-    background: rgba(18, 19, 22, 0.42);
+    background: rgba(23, 19, 15, 0.42);
     -webkit-backdrop-filter: blur(14px) saturate(1.2);
     backdrop-filter: blur(14px) saturate(1.2);
     transition: transform var(--dur) var(--ease-out);
@@ -556,7 +654,7 @@
     padding: 5px 12px;
     border: 1px solid rgba(255, 255, 255, 0.24);
     border-radius: 999px;
-    background: rgba(18, 19, 22, 0.45);
+    background: rgba(23, 19, 15, 0.45);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     color: #fff;
@@ -646,7 +744,7 @@
     margin: 0;
     padding: 0;
     border: 0;
-    background: rgba(12, 13, 15, 0.94);
+    background: rgba(17, 14, 11, 0.94);
     color: var(--on-dark);
     opacity: 0;
     transition: opacity var(--dur) ease, display var(--dur) allow-discrete, overlay var(--dur) allow-discrete;
@@ -781,7 +879,7 @@
     overflow: hidden;
     border-radius: var(--radius-xl);
     background: var(--night-2);
-    box-shadow: 0 30px 60px -30px rgba(18, 19, 22, 0.45);
+    box-shadow: 0 30px 60px -30px rgba(23, 19, 15, 0.45);
 }
 
 .sample-preview-frame img,
@@ -1064,7 +1162,7 @@
         background: rgba(245, 246, 244, 0.84);
         -webkit-backdrop-filter: blur(16px) saturate(1.3);
         backdrop-filter: blur(16px) saturate(1.3);
-        box-shadow: 0 24px 50px -24px rgba(18, 19, 22, 0.45);
+        box-shadow: 0 24px 50px -24px rgba(23, 19, 15, 0.45);
     }
 }
 
@@ -1096,4 +1194,19 @@
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 24px;
+}
+
+/* phones: the fixed contact bar covers the bottom 68px, so the hero content sits above it */
+@media (max-width: 767px) {
+    .room-nav {
+        bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+
+    .hero-inner {
+        padding-bottom: calc(132px + env(safe-area-inset-bottom));
+    }
+
+    .room-caption {
+        bottom: calc(132px + env(safe-area-inset-bottom));
+    }
 }

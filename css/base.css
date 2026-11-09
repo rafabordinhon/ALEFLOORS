@@ -6,8 +6,8 @@
 
 :root {
     /* Color */
-    --night: #121316;          /* hero, footer, dark bands */
-    --night-2: #1b1d21;        /* raised surfaces on dark */
+    --night: #17130f;          /* warm charcoal: hero, footer, dark bands */
+    --night-2: #221c17;        /* raised surfaces on dark */
     --porcelain: #f5f6f4;      /* light page background */
     --paper: #ffffff;          /* cards on porcelain */
     --graphite: #1e1f22;       /* text on light */
@@ -430,7 +430,7 @@ p {
 }
 
 .site-header.over-dark::before {
-    background: rgba(18, 19, 22, 0.72);
+    background: rgba(23, 19, 15, 0.72);
     border-bottom-color: var(--line-dark);
 }
 
@@ -973,7 +973,7 @@ p {
         grid-template-columns: 1fr 1fr 1.3fr;
         gap: 8px;
         padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-        background: rgba(18, 19, 22, 0.92);
+        background: rgba(23, 19, 15, 0.92);
         border-top: 1px solid var(--line-dark);
         -webkit-backdrop-filter: blur(14px);
         backdrop-filter: blur(14px);

@@ -1,18 +1,24 @@
-// Ale Floors — home hero 3D scene.
-// An "exploded" floor sample with the four real layers of an epoxy flake floor
-// (prepared concrete, primer, base & flake layer, topcoat). The layers drop in one
-// by one on load, follow the mouse a little, and close together as the visitor scrolls.
+// Ale Floors — home hero: a walk through a warm-lit, three-room showroom.
+// The floor is the star of each room: metallic epoxy, epoxy flake ("Outback"),
+// polished concrete. Real project photos hang on the walls, and the layered
+// floor sample stands on a plinth in the first room.
 //
-// Three.js 0.170.0 is served from js/vendor/ and only downloaded when the device can
-// run it well. Otherwise the static image in the hero (hero-fallback.webp) stays.
-// Add ?no3d to the URL to see the fallback.
+// Scrolling through the tall hero moves the camera from room to room (the same
+// progress js/home.js uses for the captions). The mouse adds a little parallax.
+//
+// Three.js 0.170.0 is served from js/vendor/ and only downloaded when the device
+// can run it well. Otherwise still renders of the rooms are shown (see index.html).
+// URL options: ?no3d shows the stills; ?shot=0|1|2 freezes a room (used to make the stills).
 
 const canvas = document.getElementById('heroCanvas');
-const hero = canvas ? canvas.closest('.hero') : null;
+const hero = document.getElementById('showroom');
+const params = new URLSearchParams(window.location.search);
+const SHOT = params.has('shot') ? Math.min(2, Math.max(0, parseInt(params.get('shot'), 10) || 0)) : null;
 
 function canUse3D() {
     if (!canvas || !hero) return false;
-    if (new URLSearchParams(window.location.search).has('no3d')) return false;
+    if (params.has('no3d')) return false;
+    if (SHOT !== null) return true;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
     const connection = navigator.connection;
     if (connection && connection.saveData) return false;
@@ -36,256 +42,405 @@ function whenIdle(callback) {
 
 if (canUse3D()) {
     whenIdle(() => {
-        Promise.all([import('./vendor/three.module.min.js'), import('./vendor/RoomEnvironment.js')])
-            .then(([THREE, env]) => start(THREE, env.RoomEnvironment))
+        Promise.all([
+            import('./vendor/three.module.min.js'),
+            import('./vendor/RoomEnvironment.js'),
+            import('./vendor/Reflector.js'),
+        ])
+            .then(([THREE, env, refl]) => start(THREE, env.RoomEnvironment, refl.Reflector))
             .catch((error) => console.warn('3D hero disabled:', error));
     });
 }
 
-function start(THREE, RoomEnvironment) {
-    const labels = Array.from(document.querySelectorAll('#heroLayers li'));
-    const reducedQuality = window.innerWidth < 768;
+function start(THREE, RoomEnvironment, Reflector) {
+    const mobile = window.innerWidth < 768;
+    const IMG = 'assets/images/';
 
     // ---------- renderer, scene, camera ----------
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !reducedQuality, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, reducedQuality ? 1.5 : 2));
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, powerPreference: 'high-performance', preserveDrawingBuffer: SHOT !== null });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.0;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    scene.background = new THREE.Color(0x17130f);
+    scene.fog = new THREE.Fog(0x17130f, 12, 30);
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 60);
 
-    // soft studio reflections (generated once, no image download)
     const pmrem = new THREE.PMREMGenerator(renderer);
     const room = new RoomEnvironment();
     const envMap = pmrem.fromScene(room, 0.04).texture;
     scene.environment = envMap;
 
-    const key = new THREE.DirectionalLight(0xfff3e6, 1.6);
-    key.position.set(-3, 6, 4);
-    scene.add(key);
-    // brand coral as a faint rim light from behind
-    const rim = new THREE.PointLight(0xff6b6b, 6, 12, 2);
-    rim.position.set(3.6, 1.2, -3.4);
-    scene.add(rim);
-
-    // ---------- textures ----------
+    // ---------- textures (room 1 first; rooms 2-3 load after the first frame) ----------
     const loader = new THREE.TextureLoader();
     const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-    const pending = [];
-    const loadTexture = (url, repeat) => {
-        let texture;
-        // one download per texture; the scene starts once every texture has arrived
-        pending.push(new Promise((resolve) => {
-            texture = loader.load(url, resolve, undefined, resolve);
-        }));
+    const textures = [];
+    const load = (url, repeat = [1, 1], onReady) => new Promise((resolve) => {
+        const texture = loader.load(url, () => {
+            if (onReady) onReady(texture);
+            resolve(texture);
+        }, undefined, () => resolve(texture));
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(repeat[0], repeat[1]);
         texture.anisotropy = anisotropy;
-        return texture;
-    };
-    const flakeMap = loadTexture('assets/images/hero/flake.webp', [1.7, 1.15]);
-    const concreteMap = loadTexture('assets/images/hero/concrete.webp', [2.2, 1.5]);
-    // same image, different tiling for the thin sides (a clone shares the download)
-    const concreteSide = concreteMap.clone();
-    concreteSide.repeat.set(2.2, 0.4);
-
-    // ---------- the floor sample ----------
-    const W = 3.4;   // width (x)
-    const D = 2.3;   // depth (z)
-    const sample = new THREE.Group();
-    scene.add(sample);
-
-    const side = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.7, ...extra });
-    // BoxGeometry material order: +x, -x, +y (top), -y, +z, -z
-    const faces = (top, sides) => [sides, sides, top, sides, sides, sides];
-
-    const layerDefs = [
-        {   // prepared concrete
-            h: 0.62,
-            material: faces(
-                new THREE.MeshStandardMaterial({ map: concreteMap, roughness: 0.92 }),
-                new THREE.MeshStandardMaterial({ map: concreteSide, roughness: 0.95, color: 0xd8d5cf }),
-            ),
-        },
-        {   // primer: thin amber coat that soaks into the concrete
-            h: 0.05,
-            material: new THREE.MeshPhysicalMaterial({
-                color: 0xc89a55, roughness: 0.3, clearcoat: 0.6, transparent: true, opacity: 0.85,
-            }),
-        },
-        {   // base coat + decorative flakes (real "Outback" swatch)
-            h: 0.13,
-            material: faces(
-                new THREE.MeshPhysicalMaterial({
-                    map: flakeMap, roughness: 0.48, envMapIntensity: 0.6, clearcoat: 0.3, clearcoatRoughness: 0.35,
-                }),
-                side(0xc9b79c, { roughness: 0.5 }),
-            ),
-        },
-        {   // clear topcoat: glossy, slightly see-through
-            h: 0.06,
-            material: new THREE.MeshPhysicalMaterial({
-                color: 0xffffff, roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02,
-                transparent: true, opacity: 0.12, envMapIntensity: 1.5, depthWrite: false,
-            }),
-            glassEdges: true,
-        },
-    ];
-
-    const layers = layerDefs.map((def, i) => {
-        const geometry = new THREE.BoxGeometry(W, def.h, D);
-        const mesh = new THREE.Mesh(geometry, def.material);
-        mesh.renderOrder = i;
-        // the clear topcoat reads as glass thanks to thin bright edges
-        if (def.glassEdges) {
-            const edges = new THREE.LineSegments(
-                new THREE.EdgesGeometry(geometry),
-                new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, depthWrite: false }),
-            );
-            mesh.add(edges);
-        }
-        sample.add(mesh);
-        return { mesh, h: def.h };
+        textures.push(texture);
     });
 
-    // soft contact shadow (a blurred radial gradient, much cheaper than shadow maps)
-    const shadowCanvas = document.createElement('canvas');
-    shadowCanvas.width = shadowCanvas.height = 128;
-    const ctx = shadowCanvas.getContext('2d');
-    const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
-    gradient.addColorStop(0, 'rgba(0,0,0,0.75)');
-    gradient.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 128, 128);
-    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-    const shadow = new THREE.Mesh(
-        new THREE.PlaneGeometry(W * 1.9, D * 2.1),
-        new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }),
-    );
-    shadow.rotation.x = -Math.PI / 2;
-    scene.add(shadow);
+    // ---------- the building: three rooms in a row along -z ----------
+    const W = 9;      // room width (x)
+    const H = 3.6;    // ceiling height
+    const D = 9;      // room depth (z)
+    const ROOMS = 3;
+    const LENGTH = D * ROOMS;
+    const FRONT = 6;                          // extra floor in front of room 1, where the walk starts
+    const SPAN = LENGTH + FRONT;              // full length of walls, ceiling and mirror
+    const MID = (FRONT - LENGTH) / 2;         // their center on z
+    const geometries = [];
+    const materials = [];
+    const track = (geometry, material) => {
+        geometries.push(geometry);
+        (Array.isArray(material) ? material : [material]).forEach((m) => materials.push(m));
+    };
+    const box = (w, h, d, material, x, y, z, parent = scene) => {
+        const geometry = new THREE.BoxGeometry(w, h, d);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(x, y, z);
+        parent.add(mesh);
+        track(geometry, material);
+        return mesh;
+    };
+
+    const plaster = new THREE.MeshStandardMaterial({ color: 0xb0a592, roughness: 0.92 });
+    const ceiling = new THREE.MeshStandardMaterial({ color: 0x241e19, roughness: 0.95 });
+    const charcoal = new THREE.MeshStandardMaterial({ color: 0x2b241e, roughness: 0.6 });
+    const walnut = new THREE.MeshStandardMaterial({ color: 0x3b2b20, roughness: 0.55 });
+    const shadowGap = new THREE.MeshBasicMaterial({ color: 0x0f0c09 });
+    const ledMaterial = new THREE.MeshBasicMaterial({ color: 0xffd9a3 });
+    materials.push(plaster, ceiling, charcoal, walnut, shadowGap, ledMaterial);
+    load(IMG + 'hero/plaster.webp', [5, 1.6], (t) => { plaster.map = t; plaster.needsUpdate = true; });
+
+    // side walls, ceiling and back wall
+    box(0.2, H, SPAN, plaster, -W / 2 - 0.1, H / 2, MID);
+    box(0.2, H, SPAN, plaster, W / 2 + 0.1, H / 2, MID);
+    box(W + 0.4, 0.2, SPAN, ceiling, 0, H + 0.1, MID);
+    box(W + 0.4, H, 0.2, plaster, 0, H / 2, -LENGTH - 0.1);
+
+    // partition walls between rooms, each with a wide opening
+    const OPEN_W = 4.2;
+    const OPEN_H = 3;
+    for (let i = 1; i < ROOMS; i++) {
+        const z = -i * D;
+        const side = (W - OPEN_W) / 2;
+        box(side, H, 0.3, plaster, -W / 2 + side / 2, H / 2, z);
+        box(side, H, 0.3, plaster, W / 2 - side / 2, H / 2, z);
+        box(OPEN_W, H - OPEN_H, 0.3, plaster, 0, OPEN_H + (H - OPEN_H) / 2, z);
+    }
+
+    // dark frames around the openings give the doorways depth
+    for (let i = 1; i < ROOMS; i++) {
+        const z = -i * D;
+        box(0.14, OPEN_H, 0.42, charcoal, -OPEN_W / 2 + 0.07, OPEN_H / 2, z);
+        box(0.14, OPEN_H, 0.42, charcoal, OPEN_W / 2 - 0.07, OPEN_H / 2, z);
+        box(OPEN_W, 0.14, 0.42, charcoal, 0, OPEN_H - 0.07, z);
+    }
+
+    // warm cove light along both sides of the ceiling (no real light: a glowing strip)
+    box(0.06, 0.04, SPAN, ledMaterial, -W / 2 + 0.05, H - 0.02, MID);
+    box(0.06, 0.04, SPAN, ledMaterial, W / 2 - 0.05, H - 0.02, MID);
+
+    // shadow gap where the walls meet the floor (an architectural detail that reads as "finished")
+    box(0.03, 0.07, SPAN, shadowGap, -W / 2 + 0.015, 0.035, MID);
+    box(0.03, 0.07, SPAN, shadowGap, W / 2 - 0.015, 0.035, MID);
+
+    // walnut slat walls with an LED line at the floor: one each side of the first opening
+    // and across the back wall (one InstancedMesh = one draw call)
+    const slatGeometry = new THREE.BoxGeometry(0.07, H - 0.25, 0.06);
+    const slatSpots = [];
+    const slatRun = (x0, x1, z) => { for (let x = x0; x <= x1; x += 0.13) slatSpots.push([x, z]); };
+    slatRun(-W / 2 + 0.25, -OPEN_W / 2 - 0.3, -D + 0.2);
+    slatRun(OPEN_W / 2 + 0.3, W / 2 - 0.25, -D + 0.2);
+    slatRun(-2.6, 2.6, -LENGTH + 0.12);
+    const slats = new THREE.InstancedMesh(slatGeometry, walnut, slatSpots.length);
+    const slatMatrix = new THREE.Matrix4();
+    slatSpots.forEach(([x, z], i) => { slats.setMatrixAt(i, slatMatrix.makeTranslation(x, (H - 0.25) / 2 + 0.12, z)); });
+    scene.add(slats);
+    track(slatGeometry, walnut);
+    box(W / 2 - OPEN_W / 2 - 0.4, 0.03, 0.05, ledMaterial, -(W / 4 + OPEN_W / 4) - 0.05, 0.1, -D + 0.25);
+    box(W / 2 - OPEN_W / 2 - 0.4, 0.03, 0.05, ledMaterial, W / 4 + OPEN_W / 4 + 0.05, 0.1, -D + 0.25);
+    box(5.4, 0.03, 0.05, ledMaterial, 0, 0.1, -LENGTH + 0.18);
+
+    // recessed downlights in the ceiling, each with a soft pool of light on the floor
+    const floorPoolCanvas = document.createElement('canvas');
+    floorPoolCanvas.width = floorPoolCanvas.height = 128;
+    const fctx = floorPoolCanvas.getContext('2d');
+    const fgrad = fctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    fgrad.addColorStop(0, 'rgba(255, 210, 150, 0.9)');
+    fgrad.addColorStop(1, 'rgba(255, 200, 140, 0)');
+    fctx.fillStyle = fgrad;
+    fctx.fillRect(0, 0, 128, 128);
+    const floorPoolTexture = new THREE.CanvasTexture(floorPoolCanvas);
+    textures.push(floorPoolTexture);
+    const floorPoolMaterial = new THREE.MeshBasicMaterial({ map: floorPoolTexture, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.22 });
+    const floorPoolGeometry = new THREE.PlaneGeometry(2.4, 2.4);
+    const downlightGeometry = new THREE.CircleGeometry(0.09, 20);
+    track(floorPoolGeometry, floorPoolMaterial);
+    track(downlightGeometry, ledMaterial);
+    for (let i = 0; i < ROOMS; i++) {
+        for (const x of [-2.2, 2.2]) {
+            for (const dz of [-2.6, 0, 2.6]) {
+                const z = -(i + 0.5) * D + dz;
+                const disc = new THREE.Mesh(downlightGeometry, ledMaterial);
+                disc.rotation.x = Math.PI / 2;
+                disc.position.set(x, H - 0.005, z);
+                scene.add(disc);
+                const pool = new THREE.Mesh(floorPoolGeometry, floorPoolMaterial);
+                pool.rotation.x = -Math.PI / 2;
+                pool.position.set(x, 0.004, z);
+                scene.add(pool);
+            }
+        }
+    }
+
+    // ---------- floors: one per room, over a shared mirror so they look glossy ----------
+    const reflectorSize = () => {
+        const scale = (mobile ? 0.35 : 0.5) * renderer.getPixelRatio();
+        return [Math.round(hero.clientWidth * scale), Math.round(hero.clientHeight * scale)];
+    };
+    const [rw, rh] = reflectorSize();
+    const mirrorGeometry = new THREE.PlaneGeometry(W, SPAN);
+    const mirror = new Reflector(mirrorGeometry, { textureWidth: rw, textureHeight: rh, color: 0x8c857c, clipBias: 0.003 });
+    mirror.rotation.x = -Math.PI / 2;
+    mirror.position.set(0, -0.002, MID);
+    scene.add(mirror);
+    geometries.push(mirrorGeometry);
+
+    const floorDefs = [
+        { url: 'hero/metallic.webp', repeat: [1, 1], opacity: 0.8, roughness: 0.16, metalness: 0.35 },
+        { url: 'hero/flake-floor.webp', repeat: [5, 5], opacity: 0.8, roughness: 0.3, metalness: 0 },
+        { url: 'hero/polished.webp', repeat: [3, 3], opacity: 0.8, roughness: 0.2, metalness: 0 },
+    ];
+    const floors = floorDefs.map((def, i) => {
+        const material = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff, roughness: def.roughness, metalness: def.metalness, clearcoat: 1, clearcoatRoughness: 0.08,
+            transparent: true, opacity: def.opacity, envMapIntensity: 0.35,
+        });
+        // room 1's floor also covers the entrance in front of it
+        const depth = i === 0 ? D + FRONT : D;
+        const geometry = new THREE.PlaneGeometry(W, depth);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(0, 0, i === 0 ? (FRONT - D) / 2 : -(i + 0.5) * D);
+        scene.add(mesh);
+        track(geometry, material);
+        return { material, def };
+    });
+
+    // ---------- light: soft fill + one warm light per room + light pools on the walls ----------
+    scene.add(new THREE.HemisphereLight(0xffe7cc, 0x2a2018, 0.45));
+    for (let i = 0; i < ROOMS; i++) {
+        const light = new THREE.PointLight(0xffcf96, 28, 11, 2);
+        light.position.set(0, H - 1.1, -(i + 0.5) * D);   // lower: lights the floor, not a hot spot on the ceiling
+        scene.add(light);
+    }
+
+    // a "wall washer": soft cone of light painted on the wall (additive, very cheap)
+    const poolCanvas = document.createElement('canvas');
+    poolCanvas.width = 128;
+    poolCanvas.height = 256;
+    const pctx = poolCanvas.getContext('2d');
+    // an ellipse (drawn in a stretched context) so the light fades out on every side
+    pctx.setTransform(1, 0, 0, 2, 0, 0);
+    const grad = pctx.createRadialGradient(64, 6, 2, 64, 14, 62);
+    grad.addColorStop(0, 'rgba(255, 214, 160, 0.95)');
+    grad.addColorStop(0.4, 'rgba(255, 196, 130, 0.4)');
+    grad.addColorStop(1, 'rgba(255, 190, 120, 0)');
+    pctx.fillStyle = grad;
+    pctx.fillRect(0, 0, 128, 128);
+    const poolTexture = new THREE.CanvasTexture(poolCanvas);
+    textures.push(poolTexture);
+    const poolMaterial = new THREE.MeshBasicMaterial({ map: poolTexture, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.55 });
+    const poolGeometry = new THREE.PlaneGeometry(1.8, 3.4);
+    track(poolGeometry, poolMaterial);
+    const lightPool = (x, z, facing) => {
+        const mesh = new THREE.Mesh(poolGeometry, poolMaterial);
+        mesh.position.set(x, H - 1.75, z);
+        mesh.rotation.y = facing;
+        scene.add(mesh);
+    };
+
+    // framed project photos on the side walls, each under its own light pool
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x1d1813, roughness: 0.5 });
+    materials.push(frameMaterial);
+    const photos = [];
+    const framed = (url, side, z, w, h) => {
+        const x = side * (W / 2 - 0.04);
+        const facing = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+        const frame = box(0.06, h + 0.12, w + 0.12, frameMaterial, x - side * 0.02, 1.75, z);
+        frame.rotation.y = 0;
+        const material = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.55 });
+        const geometry = new THREE.PlaneGeometry(w, h);
+        const photo = new THREE.Mesh(geometry, material);
+        photo.position.set(x - side * 0.06, 1.75, z);
+        photo.rotation.y = facing;
+        scene.add(photo);
+        track(geometry, material);
+        photos.push({ url, material });
+        lightPool(x - side * 0.08, z, facing);
+    };
+    // room 1 — metallic floors
+    framed(IMG + '1-home/finishedServices/FS5.webp', -1, -3.4, 1.5, 1.1);
+    framed(IMG + '1-home/finishedServices/FS8.webp', -1, -6.2, 1.5, 1.1);
+    framed(IMG + '1-home/finishedServices/FS7.webp', 1, -6.6, 1.3, 1.1);
+    // room 2 — flake / garage floors
+    framed(IMG + '2-service/homeServices/garage.webp', -1, -12.2, 1.9, 1.44);
+    framed(IMG + '1-home/generalServices/epoxyGarageFloor.webp', 1, -11.6, 1.8, 1.35);
+    framed(IMG + '1-home/finishedServices/FS1.webp', 1, -15.4, 1.4, 1.05);
+    // room 3 — concrete and pool decks
+    framed(IMG + '1-home/generalServices/polishedConcrete-600.webp', -1, -21.4, 1.2, 1.6);
+    framed(IMG + '2-service/homeServices/pool-600.webp', 1, -20.8, 1.9, 1.42);
+    framed(IMG + '1-home/generalServices/polyAsparticPoolDeck.webp', 1, -24.6, 1.8, 1.15);
+
+    // back wall: a lit niche with an LED line, closes the walk
+    box(3.2, 0.04, 0.1, ledMaterial, 0, 2.6, -LENGTH + 0.05);
+    lightPool(-2.4, -LENGTH + 0.02, 0);
+    lightPool(2.4, -LENGTH + 0.02, 0);
+
+    // ---------- room 1 centerpiece: the layered floor sample on a plinth ----------
+    const plinth = box(1.3, 0.78, 1.3, charcoal, 1.7, 0.39, -4.6);
+    const sample = new THREE.Group();
+    sample.position.set(1.7, 0.86, -4.6);
+    scene.add(sample);
+    const spot = new THREE.SpotLight(0xffe0b8, 40, 7, 0.36, 0.7, 2);
+    spot.position.set(1.4, H - 0.1, -3.6);
+    spot.target = plinth;
+    scene.add(spot);
+    const sampleLayers = [
+        { h: 0.2, material: new THREE.MeshStandardMaterial({ color: 0xa9a49c, roughness: 0.9 }) },
+        { h: 0.02, material: new THREE.MeshPhysicalMaterial({ color: 0xc89a55, roughness: 0.3, transparent: true, opacity: 0.85 }) },
+        { h: 0.045, material: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.45, clearcoat: 0.4 }) },
+        { h: 0.02, material: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, clearcoat: 1, transparent: true, opacity: 0.2, depthWrite: false }) },
+    ];
+    let stackY = 0;
+    const sampleMeshes = sampleLayers.map((layer, i) => {
+        const mesh = box(1.0, layer.h, 0.7, layer.material, 0, 0, 0, sample);
+        mesh.userData.restY = stackY + layer.h / 2;
+        mesh.userData.index = i;
+        stackY += layer.h;
+        return mesh;
+    });
+    load(IMG + 'hero/concrete.webp', [1.4, 1], (t) => { sampleLayers[0].material.map = t; sampleLayers[0].material.color.set(0xffffff); sampleLayers[0].material.needsUpdate = true; });
+
+    // ---------- camera path: one stop per room ----------
+    // stops (position, look-at). Progress 0..1 holds at each stop, then glides to the next.
+    const STOPS = [
+        { pos: [-1.6, 1.55, 3.2], look: [1.4, 0.9, -5.6] },
+        { pos: [1.2, 1.5, -6.4], look: [-1.2, 0.8, -13.8] },
+        { pos: [-0.6, 1.5, -17.4], look: [1.2, 0.8, -25.2] },
+    ];
+    // progress ranges: hold room 1 until 0.12, glide until 0.45, hold, glide 0.6 -> 0.92, hold
+    const SEGMENTS = [[0.12, 0.45], [0.6, 0.92]];
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const lerp3 = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+    function pathAt(p) {
+        if (p <= SEGMENTS[0][0]) return STOPS[0];
+        for (let s = 0; s < SEGMENTS.length; s++) {
+            const [a, b] = SEGMENTS[s];
+            if (p < a) return STOPS[s];
+            if (p <= b) {
+                const t = smooth((p - a) / (b - a));
+                return { pos: lerp3(STOPS[s].pos, STOPS[s + 1].pos, t), look: lerp3(STOPS[s].look, STOPS[s + 1].look, t) };
+            }
+        }
+        return STOPS[STOPS.length - 1];
+    }
 
     // ---------- state ----------
-    let startTime = performance.now();
-    const pointer = { x: 0, y: 0 };      // target, -1..1
-    const tilt = { x: 0, y: 0 };         // smoothed
-    let scrollProgress = 0;              // 0 at top of the page, 1 when the hero has scrolled away
-    let smoothScroll = 0;
-    let layout = { x: 0, y: 0, scale: 1, labels: false };
+    const pointer = { x: 0, y: 0 };
+    const tilt = { x: 0, y: 0 };
+    let progress = SHOT !== null ? [0, 0.52, 1][SHOT] : 0;
+    let smoothProgress = progress;
     let running = false;
     let frame = 0;
     let lastTime = performance.now();
+    let startTime = performance.now();
     let firstFrame = true;
-
-    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    const lookAt = new THREE.Vector3();
     const damp = (current, target, lambda, dt) => current + (target - current) * (1 - Math.exp(-lambda * dt));
+    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    function readProgress() {
+        if (SHOT !== null) return;
+        const range = hero.offsetHeight - window.innerHeight;
+        progress = range > 0 ? clamp01(-hero.getBoundingClientRect().top / range) : 0;
+    }
 
     function resize() {
         const width = hero.clientWidth;
-        const height = hero.clientHeight;
+        const height = window.innerHeight;
         renderer.setSize(width, height, false);
         camera.aspect = width / height;
-        const desktop = width >= 1024;
-        const aspect = width / height;
-        // half the visible width (world units) at the sample's distance from the camera (~9.7)
-        const halfWidth = Math.tan(THREE.MathUtils.degToRad((desktop ? 30 : 36) / 2)) * 9.7 * aspect;
-        // desktop: sample centered at 67% of the screen width, about a third of it wide,
-        // leaving room for the layer labels on its right; phones/tablets: centered on top
-        layout = desktop
-            ? width < 1200
-                ? { x: 0.28 * halfWidth, y: 0.15, scale: 0.37 * aspect, labels: true }
-                : { x: 0.34 * halfWidth, y: 0.15, scale: Math.min(0.8, 0.4 * aspect), labels: true }
-            // narrow screens: shrink with the aspect ratio so the sample never touches the edges
-            : { x: 0, y: 1.0, scale: Math.min(0.8, Math.max(0.5, (width / height) * 1.05)), labels: false };
-        camera.fov = desktop ? 30 : 36;
-        camera.position.set(0, 3.1, 9.2);
-        camera.lookAt(0, 0.35, 0);
+        // narrow screens see less sideways: widen the lens a little
+        camera.fov = camera.aspect < 0.8 ? 62 : camera.aspect < 1.2 ? 56 : 48;
         camera.updateProjectionMatrix();
+        const [w, h] = reflectorSize();
+        mirror.getRenderTarget().setSize(w, h);
     }
-
-    function onPointerMove(event) {
-        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = (event.clientY / window.innerHeight) * 2 - 1;
-    }
-
-    function onScroll() {
-        scrollProgress = clamp01(window.scrollY / (hero.offsetHeight * 0.75));
-    }
-
-    const projected = new THREE.Vector3();
 
     function render(now) {
         const dt = Math.min((now - lastTime) / 1000, 0.05);
         lastTime = now;
         const t = (now - startTime) / 1000;
 
-        tilt.x = damp(tilt.x, pointer.x, 3.5, dt);
-        tilt.y = damp(tilt.y, pointer.y, 3.5, dt);
-        smoothScroll = damp(smoothScroll, scrollProgress, 6, dt);
+        tilt.x = damp(tilt.x, pointer.x, 3, dt);
+        tilt.y = damp(tilt.y, pointer.y, 3, dt);
+        smoothProgress = SHOT !== null ? progress : damp(smoothProgress, progress, 4, dt);
 
-        // explode: 1 = layers apart, 0 = assembled. Scrolling closes the sample.
-        const explode = 1 - easeOutCubic(smoothScroll);
-        const gap = 0.42 * explode;
-
-        sample.position.set(layout.x, layout.y - smoothScroll * 0.6, 0);
-        sample.scale.setScalar(layout.scale);
-        sample.rotation.set(
-            0.08 + tilt.y * 0.08,
-            -0.62 + Math.sin(t * 0.25) * 0.06 + tilt.x * 0.18 + smoothScroll * 0.7,
-            0,
+        const stop = pathAt(smoothProgress);
+        // intro: the lights come up and the camera eases in (once, on load)
+        const intro = SHOT !== null ? 1 : easeOutCubic(clamp01(t / 1.8));
+        renderer.toneMappingExposure = 0.35 + 0.65 * intro;
+        const sway = SHOT !== null ? 0 : Math.sin(t * 0.3) * 0.06;
+        camera.position.set(
+            stop.pos[0] + tilt.x * 0.25 + sway,
+            stop.pos[1] - tilt.y * 0.12,
+            stop.pos[2] + (1 - intro) * 1.4,
         );
+        lookAt.set(stop.look[0] + tilt.x * 0.6, stop.look[1] - tilt.y * 0.3, stop.look[2]);
+        camera.lookAt(lookAt);
 
-        // intro: layers drop in from above, bottom layer first ("built layer by layer")
-        let y = 0;
-        layers.forEach((layer, i) => {
-            const intro = easeOutCubic(clamp01((t - 0.15 - i * 0.22) / 0.9));
-            const restY = y + layer.h / 2 + i * gap;
-            layer.mesh.position.y = restY + (1 - intro) * 2.6;
-            layer.mesh.visible = intro > 0.001;
-            layer.restY = restY;
-            layer.intro = intro;
-            y += layer.h;
-        });
-
-        shadow.position.set(layout.x, layout.y - smoothScroll * 0.6 - 0.02, 0);
-        shadow.scale.setScalar(layout.scale);
-        shadow.material.opacity = 0.55 + 0.3 * (1 - explode);
+        // the sample turns slowly and its layers breathe apart a little
+        sample.rotation.y = -0.5 + t * 0.25;
+        const gap = 0.02 + (SHOT !== null ? 0.03 : 0.03 * (0.5 + 0.5 * Math.sin(t * 0.9)));
+        sampleMeshes.forEach((mesh) => { mesh.position.y = mesh.userData.restY + mesh.userData.index * gap; });
 
         renderer.render(scene, camera);
-
-        // labels next to each layer (top layer first in the list)
-        if (layout.labels && labels.length === layers.length) {
-            sample.updateMatrixWorld();
-            const width = hero.clientWidth;
-            const height = hero.clientHeight;
-            layers.forEach((layer, i) => {
-                const label = labels[layers.length - 1 - i];
-                // anchor to whichever right-hand corner is furthest right on screen
-                let sx = -Infinity;
-                let sy = 0;
-                [D / 2, -D / 2].forEach((z) => {
-                    projected.set(W / 2, layer.restY, z).applyMatrix4(sample.matrixWorld).project(camera);
-                    const x = (projected.x * 0.5 + 0.5) * width;
-                    if (x > sx) {
-                        sx = x;
-                        sy = (-projected.y * 0.5 + 0.5) * height;
-                    }
-                });
-                sx += 14;
-                label.style.transform = `translate(${sx.toFixed(1)}px, ${(sy - 8).toFixed(1)}px)`;
-                // fade out early, before the closing layers bring the labels together
-                label.style.opacity = String((clamp01((explode - 0.55) / 0.45) * layer.intro).toFixed(3));
-            });
-        }
 
         if (firstFrame) {
             firstFrame = false;
             document.documentElement.classList.add('has-3d');
+            loadLater();
         }
+    }
+
+    // rooms 2-3 textures and the photos: after the first frame, so room 1 shows up fast
+    let laterLoaded = false;
+    function loadLater() {
+        if (laterLoaded) return;
+        laterLoaded = true;
+        floors.forEach(({ material, def }, i) => {
+            if (i === 0) return;
+            load(IMG + def.url, def.repeat, (tex) => { material.map = tex; material.needsUpdate = true; });
+        });
+        photos.forEach(({ url, material }) => load(url, [1, 1], (tex) => {
+            tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+            material.map = tex;
+            material.color.set(0xffffff);
+            material.needsUpdate = true;
+        }));
     }
 
     function loop(now) {
@@ -317,8 +472,14 @@ function start(THREE, RoomEnvironment) {
     const onVisibility = () => (document.hidden ? pause() : heroVisible && play());
     document.addEventListener('visibilitychange', onVisibility);
 
+    const onPointerMove = (event) => {
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = (event.clientY / window.innerHeight) * 2 - 1;
+    };
+    const onScroll = () => readProgress();
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(hero);
+    window.addEventListener('resize', resize);
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -327,19 +488,15 @@ function start(THREE, RoomEnvironment) {
         pause();
         observer.disconnect();
         resizeObserver.disconnect();
+        window.removeEventListener('resize', resize);
         window.removeEventListener('pointermove', onPointerMove);
         window.removeEventListener('scroll', onScroll);
         document.removeEventListener('visibilitychange', onVisibility);
-        scene.traverse((object) => {
-            if (!object.geometry) return;   // meshes and the topcoat's edge lines
-            object.geometry.dispose();
-            const materials = Array.isArray(object.material) ? object.material : [object.material];
-            materials.forEach((material) => {
-                if (material.map) material.map.dispose();
-                material.dispose();
-            });
-        });
-        [flakeMap, concreteMap, concreteSide, shadowTexture, envMap].forEach((texture) => texture.dispose());
+        geometries.forEach((g) => g.dispose());
+        materials.forEach((m) => m.dispose());
+        textures.forEach((tex) => tex.dispose());
+        mirror.dispose();
+        envMap.dispose();
         pmrem.dispose();
         renderer.dispose();
     }
@@ -356,9 +513,16 @@ function start(THREE, RoomEnvironment) {
     });
 
     resize();
-    onScroll();
-    // start only when the textures are ready, so the layers never appear blank
-    Promise.all(pending).then(() => {
+    readProgress();
+    smoothProgress = progress;
+
+    // room 1 needs its floor before the first frame; the rest streams in afterwards
+    const firstReady = [load(IMG + floorDefs[0].url, floorDefs[0].repeat, (tex) => {
+        floors[0].material.map = tex;
+        floors[0].material.needsUpdate = true;
+    })];
+    if (SHOT !== null) loadLater();
+    Promise.all(firstReady).then(() => {
         startTime = performance.now();
         play();
     });

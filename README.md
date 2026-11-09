@@ -13,7 +13,8 @@ css/pages.css           páginas internas (cabeçalho escuro, títulos, CTA, pá
 css/<página>.css        estilos específicos de cada página interna
 js/script.js            menu, header, animações, contadores, antes/depois, Google Analytics
 js/home.js              home: quadro de cores e lightbox da galeria
-js/hero-3d.js           cena 3D do hero (Three.js); sem WebGL/celular fraco mostra a imagem estática
+js/hero-3d.js           hero: passeio 3D por 3 ambientes de showroom (Three.js); sem WebGL/celular fraco
+                        mostra as imagens showroom-1..3 (geradas da cena com ?shot=0|1|2)
 js/vendor/              Three.js 0.170.0 (servido pelo próprio site)
 js/blog.js              filtro + paginação do blog
 js/contact.js           formulário (Netlify Forms + WhatsApp)
@@ -21,7 +22,7 @@ assets/icons.svg        todos os ícones do site
 assets/images/          imagens em WebP (+ cópias -600 para celular); hero/ = texturas e fallback do 3D
 tools/build.py          sincroniza <head>, menu, rodapé e gera sitemap/robots/_headers/_redirects
 tools/optimize-images.py converte novas fotos para WebP no tamanho certo
-tools/make-hero-textures.py gera as texturas do 3D a partir das amostras de flake
+tools/make-hero-textures.py gera as texturas do 3D (piso metálico, flake, concreto, reboco)
 _headers, _redirects    configuração do Netlify (gerados pelo build.py)
 docs/redesign/          estrutura e plano do redesign
 ```

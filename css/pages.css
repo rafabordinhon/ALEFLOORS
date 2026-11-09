@@ -20,8 +20,8 @@
     --white: #ffffff;
     --light-bg: var(--porcelain);
     --border-color: var(--line-light);
-    --shadow: 0 1px 2px rgba(18, 19, 22, 0.04), 0 8px 24px -12px rgba(18, 19, 22, 0.18);
-    --shadow-hover: 0 1px 2px rgba(18, 19, 22, 0.05), 0 16px 32px -14px rgba(18, 19, 22, 0.28);
+    --shadow: 0 1px 2px rgba(23, 19, 15, 0.04), 0 8px 24px -12px rgba(23, 19, 15, 0.18);
+    --shadow-hover: 0 1px 2px rgba(23, 19, 15, 0.05), 0 16px 32px -14px rgba(23, 19, 15, 0.28);
     --transition: transform var(--dur) var(--ease-out), opacity var(--dur) ease, background-color var(--dur) ease,
         color var(--dur) ease, border-color var(--dur) ease, box-shadow var(--dur) ease;
 }

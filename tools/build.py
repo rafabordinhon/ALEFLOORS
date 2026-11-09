@@ -86,7 +86,7 @@ POSTS_PUBLISHED = "2026-02-24"
 # Fonts (Google Fonts) and browser theme color
 FONTS = ("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500"
             "&amp;family=Schibsted+Grotesk:wght@400..700&amp;display=swap")
-THEME_COLOR = "#121316"
+THEME_COLOR = "#17130f"
 
 # ---------------------------------------------------------------------------
 
