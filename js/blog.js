@@ -1,120 +1,67 @@
-// ========================================
-// BLOG FUNCTIONALITY
-// ========================================
+// Blog listing: category filter + pagination working together.
+// Each post card has data-category; each filter button has data-filter.
+(() => {
+    'use strict';
 
-// Pagination functionality
-const paginationButtons = document.querySelectorAll('.page-btn');
-const blogPosts = document.querySelectorAll('.blog-post');
-const postsPerPage = 6;
-let currentPage = 1;
+    const posts = Array.from(document.querySelectorAll('.blog-post'));
+    const pager = document.querySelector('.pagination');
+    const filters = Array.from(document.querySelectorAll('[data-filter]'));
+    const list = document.querySelector('.blog-posts');
+    if (!posts.length || !pager || !list) return;
 
-function showPage(page, shouldScroll = true) {
-    const start = (page - 1) * postsPerPage;
-    const end = start + postsPerPage;
-    
-    blogPosts.forEach((post, index) => {
-        if (index >= start && index < end) {
-            post.style.display = 'block';
-            post.style.animation = 'fadeIn 0.5s ease';
-        } else {
-            post.style.display = 'none';
-        }
-    });
-    
-    // Update active button
-    paginationButtons.forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.textContent === String(page)) {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Scroll to top of blog section only when explicitly requested
-    if (shouldScroll) {
-        document.querySelector('.blog-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
+    const PER_PAGE = 6;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let filter = 'all';
+    let page = 1;
 
-// Add click events to pagination buttons
-paginationButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const buttonText = button.textContent.trim();
-        
-        if (buttonText === 'Next →') {
-            const totalPages = Math.ceil(blogPosts.length / postsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                showPage(currentPage);
-            }
-        } else if (buttonText === '← Previous') {
-            if (currentPage > 1) {
-                currentPage--;
-                showPage(currentPage);
-            }
-        } else {
-            currentPage = parseInt(buttonText);
-            showPage(currentPage);
-        }
-    });
-});
-
-// Initialize first page without scrolling
-if (blogPosts.length > 0) {
-    showPage(1, false);
-}
-
-// Header feature items filter functionality
-const headerFeatureItems = document.querySelectorAll('.header-feature-item[data-filter]');
-
-headerFeatureItems.forEach(item => {
-    item.addEventListener('click', () => {
-        const filter = item.getAttribute('data-filter');
-        
-        // Remove active class from all items
-        headerFeatureItems.forEach(i => i.classList.remove('active'));
-        
-        // Add active class to clicked item
-        item.classList.add('active');
-        
-        // Filter posts
-        blogPosts.forEach(post => {
-            const postCategory = post.querySelector('.post-category').textContent.trim();
-            
-            if (filter === 'all') {
-                post.style.display = 'block';
-                post.style.animation = 'fadeIn 0.5s ease';
-            } else if (postCategory === filter) {
-                post.style.display = 'block';
-                post.style.animation = 'fadeIn 0.5s ease';
-            } else {
-                post.style.display = 'none';
-            }
+    function makeButton(label, targetPage, options = {}) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'page-btn' + (options.current ? ' active' : '');
+        button.textContent = label;
+        if (options.ariaLabel) button.setAttribute('aria-label', options.ariaLabel);
+        if (options.current) button.setAttribute('aria-current', 'page');
+        button.addEventListener('click', () => {
+            page = targetPage;
+            render(true);
         });
-        
-        // Reset to page 1 after filtering
-        currentPage = 1;
-        
-        // Scroll to blog posts section
-        document.querySelector('.blog-posts').scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
+        return button;
+    }
+
+    function render(scroll) {
+        const matching = posts.filter((post) => filter === 'all' || post.dataset.category === filter);
+        const totalPages = Math.max(1, Math.ceil(matching.length / PER_PAGE));
+        page = Math.min(Math.max(page, 1), totalPages);
+
+        const start = (page - 1) * PER_PAGE;
+        const visible = new Set(matching.slice(start, start + PER_PAGE));
+        posts.forEach((post) => { post.hidden = !visible.has(post); });
+
+        pager.innerHTML = '';
+        if (totalPages > 1) {
+            if (page > 1) pager.appendChild(makeButton('← Previous', page - 1));
+            for (let i = 1; i <= totalPages; i++) {
+                pager.appendChild(makeButton(String(i), i, { current: i === page, ariaLabel: 'Page ' + i }));
+            }
+            if (page < totalPages) pager.appendChild(makeButton('Next →', page + 1));
+        }
+
+        filters.forEach((button) => {
+            const active = button.dataset.filter === filter;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-pressed', String(active));
+        });
+
+        if (scroll) list.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    filters.forEach((button) => {
+        button.addEventListener('click', () => {
+            filter = button.dataset.filter;
+            page = 1;
+            render(true);
         });
     });
-});
 
-// Add fade-in animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-`;
-document.head.appendChild(style);
+    render(false);
+})();
