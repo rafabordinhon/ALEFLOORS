@@ -125,7 +125,7 @@
         const panels = $$('.room-panel', hero);
         const stills = $$('.hero-still', hero);
         const navItems = $$('.room-nav-item', hero);
-        const ROOM_AT = [0, 0.28, 0.75];          // progress where each room starts
+        const ROOM_AT = [0, 0.24, 0.68];          // progress where each room starts
         const SCROLL_TO = [0, 0.52, 0.97];        // where the room-nav buttons take you
         let room = -1;
         let ticking = false;
@@ -148,6 +148,7 @@
         const setRoom = (next) => {
             if (next === room) return;
             room = next;
+            if (typeof closeCards === 'function') closeCards();
             panels.forEach((panel) => {
                 const active = Number(panel.dataset.room) === room;
                 panel.classList.toggle('is-active', active);
@@ -160,6 +161,30 @@
                 item.setAttribute('aria-current', i === room ? 'true' : 'false');
             });
         };
+
+        // hotspot cards: one open at a time; Esc, a click elsewhere or a room change closes it
+        const spots = $$('.hotspot', hero);
+        const closeCards = () => spots.forEach((spot) => {
+            spot.setAttribute('aria-expanded', 'false');
+            $('#' + spot.getAttribute('aria-controls')).hidden = true;
+        });
+        spots.forEach((spot) => spot.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const open = spot.getAttribute('aria-expanded') !== 'true';
+            closeCards();
+            spot.setAttribute('aria-expanded', String(open));
+            $('#' + spot.getAttribute('aria-controls')).hidden = !open;
+        }));
+        document.addEventListener('click', (event) => { if (!event.target.closest('.spot-card')) closeCards(); });
+        document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeCards(); });
+
+        // live flake color: tells js/hero-3d.js which palette to paint on the garage floor
+        const chips = $$('.flake-chip', hero);
+        chips.forEach((chip) => chip.addEventListener('click', () => {
+            chips.forEach((other) => other.setAttribute('aria-pressed', String(other === chip)));
+            $('#flakeName').textContent = chip.dataset.flake;
+            window.dispatchEvent(new CustomEvent('ale:flake', { detail: chip.dataset.flake }));
+        }));
 
         const update = () => {
             ticking = false;

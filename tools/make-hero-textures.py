@@ -5,7 +5,6 @@ Run from the project folder:   python tools/make-hero-textures.py
 Outputs (assets/images/hero/):
   concrete.webp  256x256, procedural concrete (fine grain + a few aggregate specks)
   metallic.webp  1024x1024, metallic epoxy (graphite with pearl veins) for the showroom floor
-  flake-floor.webp 512x512, seamless flake floor built from the swatch's colors
   plaster.webp   512x512, warm wall plaster
   polished.webp  512x512, polished concrete floor
 
@@ -138,12 +137,11 @@ def polished_texture(size: int = 512) -> Image.Image:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    flake_scatter_texture().save(OUT / "flake-floor.webp", "WEBP", quality=82, method=6)
     concrete_texture().save(OUT / "concrete.webp", "WEBP", quality=80, method=6)
     metallic_texture().save(OUT / "metallic.webp", "WEBP", quality=80, method=6)
     plaster_texture().save(OUT / "plaster.webp", "WEBP", quality=74, method=6)
     polished_texture().save(OUT / "polished.webp", "WEBP", quality=78, method=6)
-    for f in ("flake-floor.webp", "concrete.webp", "metallic.webp", "plaster.webp", "polished.webp"):
+    for f in ("concrete.webp", "metallic.webp", "plaster.webp", "polished.webp"):
         print(f, (OUT / f).stat().st_size // 1024, "KB")
 
 

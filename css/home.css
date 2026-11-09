@@ -49,7 +49,7 @@
 
 .hero-still {
     opacity: 0;
-    transition: opacity 700ms var(--ease-out);
+    transition: opacity 400ms var(--ease-out);
 }
 
 .hero-still.is-active {
@@ -83,7 +83,7 @@
 
 /* panels: one per room, crossfading */
 .room-panel {
-    transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out), visibility 0s linear 0s;
+    transition: opacity 280ms var(--ease-out), transform 280ms var(--ease-out), visibility 0s linear 0s;
 }
 
 .js .room-panel:not(.is-active) {
@@ -91,7 +91,7 @@
     transform: translateY(16px);
     visibility: hidden;
     pointer-events: none;
-    transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out), visibility 0s linear 300ms;
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), visibility 0s linear 180ms;
 }
 
 .hero-inner {
@@ -1209,4 +1209,152 @@ html:not(.js) .room-nav {
     .room-caption {
         bottom: calc(132px + env(safe-area-inset-bottom));
     }
+}
+
+/* --------------------------------------------------------------------------
+   Showroom extras: hotspots pinned to the floors (js/hero-3d.js positions them),
+   their cards, and the live flake color picker
+   -------------------------------------------------------------------------- */
+.hotspot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    display: none;
+    width: 44px;
+    height: 44px;
+    margin: -22px 0 0 -22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+}
+
+.has-3d .hotspot.is-on {
+    display: block;
+}
+
+/* white dot + soft pulsing ring (the ring only animates opacity/transform) */
+.hotspot::before,
+.hotspot::after {
+    content: "";
+    position: absolute;
+    inset: 13px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.hotspot::after {
+    inset: 4px;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: none;
+    animation: hotspot-pulse 2.2s var(--ease-out) infinite;
+}
+
+.hotspot[aria-expanded="true"]::after {
+    animation: none;
+    opacity: 1;
+}
+
+@keyframes hotspot-pulse {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(1.35); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hotspot::after { animation: none; }
+}
+
+.spot-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 4;
+    width: min(300px, calc(100vw - 32px));
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    background: rgba(28, 23, 19, 0.6);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    backdrop-filter: blur(18px) saturate(1.2);
+    color: #d6d0c8;
+    font-size: var(--fs-small);
+    line-height: 1.5;
+    transform-origin: 0 0;
+}
+
+.spot-card:not([hidden]) {
+    animation: spot-in 200ms var(--ease-out);
+}
+
+@keyframes spot-in {
+    from { opacity: 0; transform: var(--spot-pos) scale(0.96); }
+}
+
+.spot-card .spot-title {
+    margin-bottom: 6px;
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-style: italic;
+    color: var(--on-dark);
+}
+
+.spot-card .btn {
+    margin-top: 14px;
+}
+
+.flake-picker {
+    display: none;
+    margin: -4px 0 18px;
+}
+
+.has-3d .flake-picker {
+    display: block;
+}
+
+.flake-picker-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: var(--fs-xs);
+    color: #d6d0c8;
+}
+
+.flake-picker-label strong {
+    color: var(--on-dark);
+    font-weight: 600;
+}
+
+.flake-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.flake-chip {
+    width: 36px;
+    height: 36px;
+    padding: 3px;
+    border: 1.5px solid transparent;
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur) ease;
+}
+
+.flake-chip img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.flake-chip[aria-pressed="true"] {
+    border-color: var(--on-dark);
+}
+
+.flake-chip:active {
+    transform: scale(0.92);
 }
