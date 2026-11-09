@@ -75,11 +75,10 @@ function start(THREE, RoomEnvironment) {
     const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     const pending = [];
     const loadTexture = (url, repeat) => {
-        const texture = loader.load(url);
+        let texture;
+        // one download per texture; the scene starts once every texture has arrived
         pending.push(new Promise((resolve) => {
-            const image = new Image();
-            image.onload = image.onerror = resolve;
-            image.src = url;              // same URL: comes from the cache
+            texture = loader.load(url, resolve, undefined, resolve);
         }));
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -89,7 +88,9 @@ function start(THREE, RoomEnvironment) {
     };
     const flakeMap = loadTexture('assets/images/hero/flake.webp', [1.7, 1.15]);
     const concreteMap = loadTexture('assets/images/hero/concrete.webp', [2.2, 1.5]);
-    const concreteSide = loadTexture('assets/images/hero/concrete.webp', [2.2, 0.4]);
+    // same image, different tiling for the thin sides (a clone shares the download)
+    const concreteSide = concreteMap.clone();
+    concreteSide.repeat.set(2.2, 0.4);
 
     // ---------- the floor sample ----------
     const W = 3.4;   // width (x)

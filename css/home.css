@@ -373,6 +373,13 @@
     overflow: hidden;
 }
 
+/* phones have the room: show the whole description */
+@media (max-width: 767px) {
+    .svc p {
+        -webkit-line-clamp: unset;
+    }
+}
+
 .svc-metallic .svc-body {
     max-width: 34rem;
 }

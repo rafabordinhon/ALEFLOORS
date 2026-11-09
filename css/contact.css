@@ -72,7 +72,7 @@
     height: 24px;
 }
 
-.method-content h4 {
+.method-content :is(h3, h4) {
     font-size: 18px;
     color: var(--primary-color);
     margin-bottom: 8px;

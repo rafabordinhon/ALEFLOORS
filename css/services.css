@@ -74,7 +74,7 @@
     flex-shrink: 0;
 }
 
-.intro-feature h4 {
+.intro-feature :is(h3, h4) {
     font-size: 18px;
     color: var(--primary-color);
     margin-bottom: 5px;
