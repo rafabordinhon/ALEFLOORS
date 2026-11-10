@@ -1,7 +1,7 @@
 // Assets: loads the baked rooms (gzipped GLB + atlas + floor light map) with a progress bar.
 // Built in order by js/hero-3d.js; values shared between modules travel in ctx (see docs/PROJECT_MAP.md).
 export default function build(ctx) {
-    const { THREE, GLTFLoader, hero, OLD, MODELS, FLOOR_LIGHT_GAIN, mobile, scene, geometries, materials, textures, anisotropy, metallicMat, flakeMat, deckMat } = ctx;
+    const { THREE, GLTFLoader, hero, OLD, MODELS, FLOOR_LIGHT_GAIN, mobile, scene, geometries, materials, textures, anisotropy, metallicMat, flakeMat, deckMat, concreteMat } = ctx;
     // ---------- the three rooms from Blender: one mesh each, colors and light baked into one texture ----------
     // The textures already have Blender's look (AgX tone mapping), so they skip three's tone mapping;
     // render() fades their color with the intro exposure instead. Progress shows in .hero-loader.
@@ -27,7 +27,7 @@ export default function build(ctx) {
             textures.push(t);
         });
         // each floor keeps its live material; its UVs (uv for A/B, uv1 for the pool deck) match the bake
-        const floors = { a: [metallicMat, 0], b: [flakeMat, 0], c: [deckMat, 1] };
+        const floors = { a: [metallicMat, 0], b: [OLD ? flakeMat : concreteMat, 0], c: [deckMat, 1] };
         const size = mobile ? '-m' : '';         // phones get the 1024 px textures (a quarter of the bytes)
         // the models come gzipped (less than half the bytes; the host doesn't compress .glb) and are
         // unpacked here; browsers without DecompressionStream load the plain .glb
@@ -43,7 +43,7 @@ export default function build(ctx) {
                 .finally(() => manager.itemEnd(url));
         };
         // pieces baked on their own (a continuous UV for curved cloth): model + atlas, no floor
-        const extras = ['b-cover'].map((r) => Promise.all([
+        const extras = [].map((r) => Promise.all([
             model(MODELS + `room-${r}.glb`),
             tex(MODELS + `room-${r}-atlas${size}.webp`, false),
         ]).then(([gltf, atlas]) => {

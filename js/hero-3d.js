@@ -70,7 +70,8 @@ if (canUse3D()) {
 function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
     const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, FLOOR_LIGHT_GAIN, FLAKES };
     modules.forEach((build) => build(ctx));
-    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, floorCards, updateFloorFx } = ctx;
+    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, floorCards, updateFloorFx } = ctx;
+    let kitchenRevealAt = null;
     let { pixelRatio, explode, sampleSpin, idle } = ctx;      // changed by the loop below (pixelRatio is mirrored back to ctx)
     // ---------- state + loop ----------
     const pointer = { x: 0, y: 0 };
@@ -172,13 +173,22 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         // floor moment (living room): as the visitor starts scrolling, the camera dips and tilts to
         // the floor, a band of light sweeps across it and the floor card shows; it eases out again
         // before the camera leaves for the next room
-        const floorMoment = SHOT !== null ? 0
-            : smooth(clamp01((smoothProgress - 0.015) / 0.05)) * (1 - smooth(clamp01((smoothProgress - 0.12) / 0.05)));
+        // one "moment" per room, inside the camera's hold there (curveAt): [living, kitchen, outdoor]
+        const moment = (a, b) => smooth(clamp01((smoothProgress - a) / 0.05)) * (1 - smooth(clamp01((smoothProgress - b) / 0.05)));
+        const moments = SHOT !== null ? [0, 0, 0] : [moment(0.015, 0.12), moment(0.4, 0.55), 0];
+        const floorMoment = Math.max(...moments);
         if (livingFloor) {
             // the opening reveals the finished floor over raw concrete, while the camera glides in
             livingFloor.reveal = SHOT !== null ? 1 : smooth(clamp01((t - 0.4) / 2.4));
             livingFloor.sweep = clamp01((smoothProgress - 0.02) / 0.13);
-            livingFloor.sweepAmt = floorMoment;
+            livingFloor.sweepAmt = moments[0];
+        }
+        if (kitchenFloor) {
+            // raw concrete until the visitor first reaches the kitchen, then the finish rolls in
+            if (kitchenRevealAt === null && (moments[1] > 0.2 || SHOT === 1)) kitchenRevealAt = t;
+            kitchenFloor.reveal = SHOT !== null ? 1 : kitchenRevealAt === null ? 0 : smooth(clamp01((t - kitchenRevealAt) / 1.8));
+            kitchenFloor.sweep = clamp01((smoothProgress - 0.41) / 0.13);
+            kitchenFloor.sweepAmt = moments[1];
         }
         updateFloorFx();
         // idle: when the visitor stops scrolling, the camera breathes a little more (decorative, very small)
@@ -225,7 +235,14 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         // the sample's shadow only needs redrawing while the living room is on screen
         const room = roomAt(smoothProgress);
         if (spot.castShadow && room === 0) renderer.shadowMap.needsUpdate = true;
-        floorCards.forEach((el) => el.classList.toggle('is-on', Number(el.dataset.room) === room && floorMoment > 0.4));
+        let cardOn = false;
+        floorCards.forEach((el) => {
+            const r = Number(el.dataset.room);
+            const on = r === room && moments[r] > 0.4;
+            el.classList.toggle('is-on', on);
+            cardOn = cardOn || on;
+        });
+        hero.classList.toggle('is-floor-moment', cardOn);    // the room caption steps aside for the card
 
         if (firstFrame) performance.mark('hero3d:render');
         renderer.render(scene, camera);

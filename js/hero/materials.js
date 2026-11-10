@@ -1,7 +1,7 @@
 // Floors: live floor materials, the floor mirror and the live flake texture.
 // Built in order by js/hero-3d.js; values shared between modules travel in ctx (see docs/PROJECT_MAP.md).
 export default function build(ctx) {
-    const { THREE, Reflector, hero, OLD, FLAKES, mobile, pixelRatio, scene, geometries, textures, mesh, anisotropy } = ctx;
+    const { THREE, Reflector, hero, OLD, FLAKES, mobile, pixelRatio, scene, geometries, textures, mesh, anisotropy, load } = ctx;
     // ---------- floors ----------
     const floorMat = (opacity, roughness, metalness = 0) => new THREE.MeshPhysicalMaterial({
         color: 0xffffff, roughness, metalness, clearcoat: 1, clearcoatRoughness: 0.08, transparent: opacity < 1, opacity, envMapIntensity: 0.35,
@@ -15,8 +15,14 @@ export default function build(ctx) {
     if (!OLD) { metallicMat.clearcoatRoughness = 0.04; metallicMat.envMapIntensity = 0.6; }
     const flakeMat = floorMat(0.82, 0.3);
     const deckMat = floorMat(1, 0.24);
+    // kitchen (tour-casa): polished concrete, light grey with a satin shine (flake moves to the pool deck)
+    const concreteMat = floorMat(0.86, 0.32);
+    concreteMat.clearcoat = 0.45;
+    concreteMat.clearcoatRoughness = 0.22;
+    concreteMat.color.set(0xeceae6);
+    if (!OLD) load('assets/images/hero/polished.webp', [2.2, 2.2], (t) => { concreteMat.map = t; concreteMat.needsUpdate = true; });
     flat(9, 11.5, metallicMat, 0, 1.25);
-    flat(9, 9, flakeMat, -9, 0);
+    flat(9, 9, OLD ? flakeMat : concreteMat, -9, 0);
 
     // shared mirror under rooms A and B gives the glossy reflections
     const reflectorSize = () => {
@@ -77,5 +83,5 @@ export default function build(ctx) {
     const onFlake = (event) => paintFlake(event.detail);
     window.addEventListener('ale:flake', onFlake);
 
-    Object.assign(ctx, { flat, metallicMat, flakeMat, deckMat, reflectorSize, mirror, onFlake });
+    Object.assign(ctx, { flat, metallicMat, flakeMat, deckMat, concreteMat, reflectorSize, mirror, onFlake });
 }

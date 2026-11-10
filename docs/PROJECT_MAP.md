@@ -26,7 +26,8 @@ Leia isto e o docs/PLAN.md no início de cada fase. Não re-explore o projeto.
   - O que muda no loop (`pixelRatio`, `explode`, `sampleSpin`, `idle`) é `let` no `start()`; o `pixelRatio` é espelhado em `ctx.pixelRatio`.
 - `js/hero/floorFx.js` (depois de materials): `ctx.addFloorFx(mat, {x0,x1})` devolve `{reveal, sweep, sweepAmt}`, e o loop chama `ctx.updateFloorFx()`. Shader via `onBeforeCompile`: concreto cru → acabado (cortina em x, com borda quente) e faixa de luz em x. A sala usa no `metallicMat` (`ctx.livingFloor`).
 - Momento do piso (no loop do `hero-3d.js`): `floorMoment` sobe em p 0.015..0.065 e desce em 0.12..0.17. A câmera desce 0.45 e inclina; o `.floor-card[data-room]` ganha `.is-on`. Os cartões ficam no `index.html` (HTML real) e o estilo em `home.css`.
-- Blender, sala da casa: `scripts/house_living.py` (rodado no fim do `build_all.py`).
+- Blender, sala da casa: `scripts/house_living.py`; cozinha: `scripts/house_kitchen.py`. Os dois rodam no fim do `build_all.py`. A cozinha é o cômodo **"b"** no bake e nos arquivos (`room-b.*`, coleção `Cozinha`). A garagem saiu da cena; `js/hero/scenes/garage.js` só serve ao `?old`.
+- `js/hero/scenes/kitchen.js`: `ctx.kitchenFloor` (floorFx no `concreteMat`). No loop, `moments[r]` por cômodo (sala 0.015..0.12, cozinha 0.40..0.55, externa na fase 4); a revelação da cozinha dispara na primeira chegada (`kitchenRevealAt`). `hero.is-floor-moment` esconde a legenda do cômodo.
 - `tools/split-hero.mjs`: o script que fez a divisão (só histórico).
 - Antes da fase 1, o `hero-3d.js` era monolítico (~1100 linhas). Detalhes antigos dele:
   - `canUse3D()`, `start()`, renderer (ACES, shadowMap só da amostra), Reflector no piso, RoomEnvironment (envMap);

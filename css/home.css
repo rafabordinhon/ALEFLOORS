@@ -311,6 +311,15 @@ html:not(.has-3d) .floor-card {
     display: none;
 }
 
+/* while a floor card is showing, the room caption (same corner) steps aside */
+.js .hero.is-floor-moment .room-caption.is-active {
+    opacity: 0;
+    filter: blur(4px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 180ms var(--ease-out), filter 180ms var(--ease-out), visibility 0s linear 180ms;
+}
+
 @media (min-width: 1024px) {
     .floor-card {
         top: auto;

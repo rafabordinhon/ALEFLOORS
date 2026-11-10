@@ -7,8 +7,9 @@ import lights from './lights.js';
 import living from './scenes/living.js';
 import assets from './assets.js';
 import garage from './scenes/garage.js';
+import kitchen from './scenes/kitchen.js';
 import outdoor from './scenes/outdoor.js';
 import cameraPath from './cameraPath.js';
 import ui from './ui.js';
 
-export default [core, props, materials, floorFx, lights, living, assets, garage, outdoor, cameraPath, ui];
+export default [core, props, materials, floorFx, lights, living, assets, garage, kitchen, outdoor, cameraPath, ui];

@@ -59,7 +59,12 @@ Blender: `scripts/house/{living,kitchen,outdoor}.py` mais o `lib.py` atual; `bak
 - **Itens originais da FASE 2:**
   - Itens: painel de pedra com prateleiras iluminadas e lareira linear, ripado, luminária de anéis, cove, cortinas translúcidas, quadros, plantas, sofá modular, poltronas, tapete, mesa de centro com objetos, parede de vidro com pôr do sol.
   - Piso metálico + momento do piso.
-- [ ] **FASE 3: COZINHA.**
+- [x] **FASE 3: COZINHA.** Feito:
+  - Cozinha integrada no lugar da garagem (sem a parede sala/cozinha, `house_kitchen.py`): armários, bancada, backsplash, LED, cooktop e coifa, cuba e torneira, geladeira, torre de forno, ilha em cascata, 3 banquetas, 3 pendentes e objetos.
+  - Piso de concreto polido (`concreteMat`) com revelação na primeira chegada e momento do piso; cartão "Polished Concrete". O texto do cômodo some enquanto o cartão aparece.
+  - HTML: etapas "Living room / Kitchen / Pool deck"; os textos dos cômodos 2 e 3 trocados (o flake e os chips foram para o deck); hotspot 2 = concreto polido.
+  - Medido: 3.880 / 2.910 KB; 57–60 FPS; console limpo.
+- **Itens originais da FASE 3:**
   - Itens: ilha com banquetas e pendentes, armários, bancada, backsplash, eletrodomésticos simples, cesta, vasos, tábua.
   - Piso de concreto polido + momento do piso.
 - [ ] **FASE 4: ÁREA EXTERNA.**
