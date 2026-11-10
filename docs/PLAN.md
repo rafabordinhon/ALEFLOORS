@@ -41,7 +41,16 @@ Blender: `scripts/house/{living,kitchen,outdoor}.py` mais o `lib.py` atual; `bak
 
 ## Fases
 - [x] **FASE 0: mapa e plano.** PROJECT_MAP, PLAN, branch, linha de base, scripts de medição em tools/perf.
-- [ ] **FASE 1: arquitetura.** Dividir o hero-3d.js nos módulos acima, **sem mudar o visual** (checar com `?shot=0|1|2` antes e depois, idênticos). Definir a biblioteca de props e a **lista de .glb (nome, fonte, licença, KB) para aprovação, antes de baixar.**
+- [x] **FASE 1: arquitetura.**
+  - Dividido em `js/hero/` (core, props, materials, lights, assets, cameraPath, ui, scenes/living|garage|outdoor) com `ctx`. `hero-3d.js` foi de 1.107 para ~360 linhas.
+  - Visual idêntico: diferença de 0,03 a 0,04% dos pixels nos `?shot=0|1|2` (só poeira e chama, que se movem). FPS e peso iguais. `?old` e `?no3d` ok, console limpo.
+  - Os módulos `kitchen.js` e `outdoor.js` novos nascem nas fases 3 e 4. `garage.js` fica com a garagem atual até sair da rota.
+  - **Biblioteca de props** (procedural, sem licença de terceiros): tudo modelado por script no Blender (`lib.py`: box com chanfro, cilindro, tubo em curva, toro, planta, tecido simulado) e assado.
+    - Sala: sofá modular, poltronas, mesa de centro com livros, vaso e bandeja, tapete, painel de pedra, lareira, prateleiras com luz, ripado, luminária de anéis, cortinas, quadros, plantas.
+    - Cozinha: ilha, banquetas, pendentes, armários, bancada, backsplash, geladeira, cooktop, coifa, forno, cesta, tábua.
+    - Externa: deck, borda da piscina, escada de inox, espreguiçadeiras, guarda-sol, palmeiras (tronco em curva com folhas), arbustos, luzes de jardim, pergolado.
+    - Ao vivo no Three: água, chamas, amostra explodida, porta de correr, céu.
+  - **Lista de .glb de terceiros: nenhum.** Proposta aguardando aprovação do Rafael: tudo procedural. Motivos: os .glb livres realistas que existem passam muito de ~300 KB (Poly Haven) ou são low-poly estilizados (Kenney, Quaternius); a pesquisa do carro já mostrou isso.
 - [ ] **FASE 2: SALA.**
   - Itens: painel de pedra com prateleiras iluminadas e lareira linear, ripado, luminária de anéis, cove, cortinas translúcidas, quadros, plantas, sofá modular, poltronas, tapete, mesa de centro com objetos, parede de vidro com pôr do sol.
   - Piso metálico + momento do piso.

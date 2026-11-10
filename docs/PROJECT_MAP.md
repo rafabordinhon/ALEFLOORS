@@ -15,7 +15,17 @@ Leia isto e o docs/PLAN.md no início de cada fase. Não re-explore o projeto.
   - Lenis (lerp 0.08) com ScrollTrigger, rodando no `gsap.ticker`;
   - `initShowroom`: progresso 0..1 do hero, troca de cômodo (`ROOM_AT=[0,.24,.68]`), barra de etapas, seta, skip, cartões e evento `ale:flake`;
   - âncoras com `lenis.scrollTo`.
-- `js/hero-3d.js` (module, **~1100 linhas, monolítico**: a fase 1 divide):
+- `js/hero-3d.js` (~360 linhas): entrada, `canUse3D`, carregamento do vendor e de `js/hero/index.js`. `start()` cria o `ctx`, roda os módulos em ordem e mantém o loop (estado, resize, tiers, render, play/pause, dispose e a sequência de início).
+- `js/hero/*.js`: cada um é `export default function build(ctx)`. Tira do `ctx` o que usa e devolve o que os seguintes usam. A ordem fica em `js/hero/index.js`:
+  - `core` (renderer, cena, câmera, env, helpers mesh/box/load/canvasTexture, M);
+  - `props` (paredes antigas, `framed`);
+  - `materials` (pisos, Reflector, flake ao vivo);
+  - `lights` (preenchimento, spots, feixes, poeira);
+  - `scenes/living`, `assets` (GLB .gz + atlas + lightmap, loader), `scenes/garage`, `scenes/outdoor`;
+  - `cameraPath` (curvas, `curveAt`, `roomAt`), `ui` (hotspots, `overCopy`).
+  - O que muda no loop (`pixelRatio`, `explode`, `sampleSpin`, `idle`) é `let` no `start()`; o `pixelRatio` é espelhado em `ctx.pixelRatio`.
+- `tools/split-hero.mjs`: o script que fez a divisão (só histórico).
+- Antes da fase 1, o `hero-3d.js` era monolítico (~1100 linhas). Detalhes antigos dele:
   - `canUse3D()`, `start()`, renderer (ACES, shadowMap só da amostra), Reflector no piso, RoomEnvironment (envMap);
   - carrega `assets/3d/room-{a,b,c}.glb(.gz)` com atlas assado (MeshBasic, toneMapped false) e lightMap nos pisos ao vivo;
   - câmera em `CatmullRomCurve3` (`pathPos`/`pathLook`, 7 pontos), `curveAt(p)` com pausas por cômodo, damp, intro e respiração;
