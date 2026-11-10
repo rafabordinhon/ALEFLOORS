@@ -210,7 +210,8 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         m.rotation.x = -Math.PI / 2;
         return m;
     };
-    const metallicMat = floorMat(0.8, 0.16, 0.35);
+    const metallicMat = floorMat(0.8, OLD ? 0.16 : 0.5, OLD ? 0.35 : 0.6);   // v2+: the roughness map sets the gloss per vein
+    if (!OLD) { metallicMat.clearcoatRoughness = 0.04; metallicMat.envMapIntensity = 0.6; }
     const flakeMat = floorMat(0.82, 0.3);
     const deckMat = floorMat(1, 0.24);
     flat(9, 11.5, metallicMat, 0, 1.25);
@@ -469,20 +470,28 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         catcher.rotation.x = -Math.PI / 2;
         catcher.receiveShadow = true;
     }
+    // the floor sample: the real metallic system, layer by layer. It opens into an exploded view as
+    // you scroll the first room (tied to "built layer by layer"); labels in .layer-labels follow it.
     const sampleMats = [
-        new THREE.MeshStandardMaterial({ color: 0xa9a49c, roughness: 0.9 }),
-        new THREE.MeshPhysicalMaterial({ color: 0xc89a55, roughness: 0.3, transparent: true, opacity: 0.85 }),
-        new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: flakeTexture, roughness: 0.45, clearcoat: 0.4 }),
-        new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, clearcoat: 1, transparent: true, opacity: 0.2, depthWrite: false }),
+        new THREE.MeshStandardMaterial({ color: 0xa9a49c, roughness: 0.9 }),                                  // concrete slab
+        new THREE.MeshStandardMaterial({ color: 0xc9c6bf, roughness: 0.7 }),                                  // primer
+        new THREE.MeshPhysicalMaterial({ color: 0x2a2826, roughness: 0.45, clearcoat: 0.3 }),                 // base coat
+        new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.55, clearcoat: 0.6 }), // metallic
+        new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.03, clearcoat: 1, transparent: true, opacity: 0.22, depthWrite: false }), // top coat
     ];
     let stackY = 0;
-    const sampleLayers = [0.2, 0.02, 0.045, 0.02].map((h, i) => {
+    const sampleLayers = [0.2, 0.02, 0.025, 0.035, 0.02].map((h, i) => {
         const m = box(0.95, h, 0.66, sampleMats[i], 0, 0, 0, sample);
-        m.userData = { restY: stackY + h / 2, i };
-        m.castShadow = i < 3;            // the clear top coat doesn't cast
+        m.userData = { restY: stackY + h / 2, i, h };
+        m.castShadow = i < 4;            // the clear top coat doesn't cast
         stackY += h;
         return m;
     });
+    const layerLabels = Array.from(hero.querySelectorAll('.layer-labels li'));   // primer, base coat, metallic, top coat
+    const layerPoint = new THREE.Vector3();
+    let explode = 0;
+    let sampleSpin = 0;
+    let idle = 0;
     load(IMG + 'hero/concrete.webp', [1.4, 1], (t) => { sampleMats[0].map = t; sampleMats[0].color.set(0xffffff); sampleMats[0].needsUpdate = true; });
     framed(IMG + '1-home/finishedServices/FS5.webp', 'z', 4.5, 0.6, -1, 1.5, 1.1, OLD);
     framed(IMG + '1-home/finishedServices/FS8.webp', 'z', 4.5, 3.6, -1, 1.5, 1.1, OLD);
@@ -528,7 +537,22 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
                 .then((buffer) => gltfLoader.parseAsync(buffer, MODELS))
                 .finally(() => manager.itemEnd(url));
         };
-        return Promise.all(['a', 'b', 'c'].map((r) => Promise.all([
+        // pieces baked on their own (a continuous UV for curved cloth): model + atlas, no floor
+        const extras = ['b-cover'].map((r) => Promise.all([
+            model(MODELS + `room-${r}.glb`),
+            tex(MODELS + `room-${r}-atlas${size}.webp`, false),
+        ]).then(([gltf, atlas]) => {
+            const baked = new THREE.MeshBasicMaterial({ map: atlas, toneMapped: false });
+            materials.push(baked);
+            bakedMats.push(baked);
+            gltf.scene.traverse((o) => {
+                if (!o.isMesh) return;
+                o.material = baked;
+                geometries.push(o.geometry);
+            });
+            scene.add(gltf.scene);
+        }));
+        return Promise.all(extras.concat(['a', 'b', 'c'].map((r) => Promise.all([
             model(MODELS + `room-${r}.glb`),
             tex(MODELS + `room-${r}-atlas${size}.webp`, false),
             tex(MODELS + `room-${r}-floor-light${size}.webp`, true),
@@ -547,7 +571,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
             mat.lightMap = floorLight;
             mat.lightMapIntensity = FLOOR_LIGHT_GAIN;
             mat.needsUpdate = true;
-        })));
+        }))));
     }
     function hideLoader() {
         if (!loaderEl || loaderEl.hidden) return;
@@ -686,6 +710,58 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     }
     framed(IMG + '2-service/homeServices/pool-600.webp', 'z', -4.5, -7.6, -1, 1.9, 1.42, OLD);
     framed(IMG + '1-home/generalServices/polyAsparticPoolDeck.webp', 'z', -4.5, -11.4, -1, 1.8, 1.15, OLD);
+    // waterline: a band of dark mosaic along the top of the pool walls; the water sits in its middle
+    const mosaic = canvasTexture(256, 32, (c) => {
+        for (let x = 0; x < 256; x += 8) {
+            for (let y = 0; y < 32; y += 8) {
+                const v = 70 + ((x * 7 + y * 13) % 5) * 9;
+                c.fillStyle = `rgb(${v * 0.35 | 0},${v * 0.75 | 0},${v | 0})`;
+                c.fillRect(x + 0.5, y + 0.5, 7, 7);
+            }
+        }
+    });
+    mosaic.wrapS = THREE.RepeatWrapping;
+    const bandMat = new THREE.MeshStandardMaterial({ map: mosaic, roughness: 0.25, emissive: 0x0b3f4a, emissiveIntensity: 0.35 });
+    materials.push(bandMat);
+    [[pw, 0.16, 0.02, pcx, pool.z0 + 0.035, 'x'], [pw, 0.16, 0.02, pcx, pool.z1 - 0.035, 'x'],
+        [0.02, 0.16, pd, pool.x0 + 0.035, pcz, 'z'], [0.02, 0.16, pd, pool.x1 - 0.035, pcz, 'z']].forEach(([w, h, d, x, z, axis]) => {
+        const m = box(w, h, d, bandMat, x, -0.08, z);
+        m.userData.axis = axis;
+    });
+    mosaic.repeat.set(6, 1);
+
+    // living room (v3): the view through the glass wall, the glass itself and the fireplace's flames
+    let flame = null;
+    if (!OLD) {
+        const viewMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+        materials.push(viewMat);
+        load(MODELS + 'view-sunset.webp', [1, 1], (t) => {
+            t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+            viewMat.map = t;
+            viewMat.needsUpdate = true;
+        });
+        mesh(new THREE.PlaneGeometry(11, 5.5), viewMat, 3, 1.25, -8);
+        const glass = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.04, metalness: 1, transparent: true, opacity: 0.08, depthWrite: false, envMapIntensity: 1.6 });
+        mesh(new THREE.PlaneGeometry(3.0, 3.07), glass, 2.95, 1.685, -4.47);
+        const flameTex = canvasTexture(256, 64, (c) => {
+            for (let i = 0; i < 18; i++) {
+                const x = 8 + i * 14 + (i % 3) * 3;
+                const g = c.createRadialGradient(x, 60, 1, x, 46, 26);
+                g.addColorStop(0, 'rgba(255,230,160,0.95)');
+                g.addColorStop(0.35, 'rgba(255,140,50,0.75)');
+                g.addColorStop(1, 'rgba(255,90,20,0)');
+                c.fillStyle = g;
+                c.beginPath();
+                c.ellipse(x, 48, 7, 18 + (i % 4) * 3, 0, 0, Math.PI * 2);
+                c.fill();
+            }
+        });
+        flameTex.wrapS = THREE.RepeatWrapping;
+        flame = new THREE.MeshBasicMaterial({ map: flameTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+        materials.push(flame);
+        mesh(new THREE.PlaneGeometry(1.4, 0.34), flame, 0.15, 0.6, -4.16);
+    }
+
     // backlit logo on the north wall: the end of the walk
     const logoTexture = canvasTexture(1024, 256, () => {});
     const drawLogo = () => {
@@ -852,22 +928,49 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         const u = curveAt(smoothProgress);
         pathPos.getPoint(u, camPos);
         pathLook.getPoint(u, camLook);
-        const intro = SHOT !== null ? 1 : 1 - Math.pow(1 - clamp01(t / 1.4), 3);
-        renderer.toneMappingExposure = 0.35 + 0.65 * intro;
+        // opening: the camera glides in from further back and a little higher while the light comes up
+        // (2.4 s, strong ease-out: fast at first, settling gently)
+        const intro = SHOT !== null ? 1 : 1 - Math.pow(1 - clamp01(t / 2.4), 4);
+        renderer.toneMappingExposure = 0.3 + 0.7 * (SHOT !== null ? 1 : 1 - Math.pow(1 - clamp01(t / 1.6), 3));
         bakedMats.forEach((m) => m.color.setScalar(renderer.toneMappingExposure));
-        const sway = SHOT !== null ? 0 : Math.sin(t * 0.3) * 0.05;
-        camera.position.set(camPos.x + tilt.x * 0.22 + sway, camPos.y - tilt.y * 0.1, camPos.z + (1 - intro) * 1.2);
-        camLook.x += tilt.x * 0.5;
+        // idle: when the visitor stops scrolling, the camera breathes a little more (decorative, very small)
+        idle = damp(idle, Math.abs(progress - smoothProgress) < 0.002 ? 1 : 0, 1.5, dt);
+        const still = SHOT !== null ? 0 : 1;
+        const swayX = still * (0.035 + 0.035 * idle) * Math.sin(t * 0.27);
+        const swayY = still * idle * 0.02 * Math.sin(t * 0.41);
+        camera.position.set(
+            camPos.x + tilt.x * 0.22 + swayX,
+            camPos.y - tilt.y * 0.1 + swayY + (1 - intro) * 0.35,
+            camPos.z + (1 - intro) * 2.2,
+        );
+        // portrait screens: in the living room, look further right so the sample and the glass wall are
+        // in frame (on landscape they already are); fades out as the camera heads to the garage
+        const portrait = clamp01((0.9 - camera.aspect) / 0.4);
+        camLook.x += portrait * 3.2 * (1 - smooth(clamp01(u / 0.35)));
+        camLook.x += tilt.x * 0.5 + still * idle * 0.06 * Math.sin(t * 0.19);
         camLook.y -= tilt.y * 0.25;
         camera.lookAt(camLook);
 
-        // small living details
-        sample.rotation.y = -0.5 + t * 0.25;
-        const gap = 0.02 + (SHOT !== null ? 0.03 : 0.03 * (0.5 + 0.5 * Math.sin(t * 0.9)));
-        sampleLayers.forEach((m) => { m.position.y = m.userData.restY + m.userData.i * gap; });
+        // exploded view of the sample: opens a little after the opening, fully as you scroll the
+        // first room, closes again as the camera leaves it
+        const opened = SHOT !== null ? 0.8 : Math.max(
+            0.3 * smooth(clamp01((t - 1.8) / 1.2)),
+            smooth(clamp01(smoothProgress / 0.13)),
+        ) * (1 - smooth(clamp01((smoothProgress - 0.18) / 0.08)));
+        explode = damp(explode, opened, 6, dt);
+        sampleSpin += dt * 0.25 * (1 - 0.75 * explode);       // turns slower while open, to read the layers
+        sample.rotation.y = -0.5 + sampleSpin;
+        sampleLayers.forEach((m) => {
+            const { restY, i } = m.userData;
+            m.position.y = restY + i * (0.006 + 0.2 * explode) + (i ? 0.003 * Math.sin(t * 0.9 + i) : 0);
+        });
         rippleNormal.offset.set(t * 0.02, t * 0.013);
         causticLayers[0].offset.set(t * 0.03, t * 0.017);
         causticLayers[1].offset.set(-t * 0.022, t * 0.028);
+        if (flame) {                     // flicker: two slow sines and a faster one, never fully off
+            flame.opacity = 0.55 + 0.18 * Math.sin(t * 3.1) * Math.sin(t * 1.7) + 0.08 * Math.sin(t * 11.3);
+            flame.map.offset.x = t * 0.04;
+        }
         dust.rotation.y = Math.sin(t * 0.05) * 0.02;
         dust.position.y = Math.sin(t * 0.2) * 0.05;
 
@@ -897,6 +1000,19 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
                 card.style.transform = pos;
                 card.style.setProperty('--spot-pos', pos);
             }
+        });
+
+        // layer labels: each one sits to the right of its layer and appears in turn as the sample opens
+        layerLabels.forEach((el, k) => {
+            const layer = sampleLayers[k + 1];
+            layerPoint.set(0.5, layer.position.y, 0.33);
+            sample.localToWorld(layerPoint).project(camera);
+            const x = (layerPoint.x * 0.5 + 0.5) * width;
+            const y = (-layerPoint.y * 0.5 + 0.5) * height;
+            const on = SHOT === null && room === 0 && explode > 0.45 + k * 0.1 && layerPoint.z < 1
+                && x > 0 && x < width - 120 && y > 60 && y < height - 60 && !overCopy(0, x, y, el.classList.contains('is-on'));
+            el.classList.toggle('is-on', on);
+            if (on) el.style.transform = `translate(${(x + 18).toFixed(1)}px, ${(y - 9).toFixed(1)}px)`;
         });
 
         if (firstFrame) {
@@ -990,7 +1106,21 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     // up front and in parallel (compileAsync) matters: done by the first render it froze the page
     // for ~4.5 s on an Intel UHD 630. If anything fails, the still images stay.
     Promise.all([
-        load(IMG + 'hero/metallic.webp', [1, 1], (t) => { metallicMat.map = t; metallicMat.needsUpdate = true; }),
+        // metallic floor: pearl and charcoal veins, with a normal and a roughness map for the clearcoat
+        load(MODELS + (mobile ? 'floor-metallic-m.webp' : 'floor-metallic.webp'), [1, 1], (t) => { metallicMat.map = t; metallicMat.needsUpdate = true; }),
+        load(MODELS + 'floor-metallic-normal.webp', [1, 1], (t) => {
+            t.colorSpace = THREE.NoColorSpace;
+            metallicMat.normalMap = t;
+            metallicMat.normalScale.set(0.35, 0.35);
+            metallicMat.clearcoatNormalMap = t;
+            metallicMat.clearcoatNormalScale.set(0.08, 0.08);
+            metallicMat.needsUpdate = true;
+        }),
+        load(MODELS + 'floor-metallic-rough.webp', [1, 1], (t) => {
+            t.colorSpace = THREE.NoColorSpace;
+            metallicMat.roughnessMap = t;
+            metallicMat.needsUpdate = true;
+        }),
         loadRooms(),
     ]).then(() => {
         performance.mark('hero3d:loaded');

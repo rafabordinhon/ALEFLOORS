@@ -259,6 +259,53 @@ html:not(.js) .room-nav {
     display: none;
 }
 
+/* layer labels of the floor sample (only drawn with the 3D scene, pinned by js/hero-3d.js) */
+.layer-labels {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    pointer-events: none;
+}
+
+.layer-labels li {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--on-dark);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    white-space: nowrap;
+    text-shadow: 0 1px 8px rgba(20, 16, 13, 0.8);
+    opacity: 0;
+    translate: -6px 0;
+    /* exit: quick */
+    transition: opacity 140ms var(--ease-out), translate 140ms var(--ease-out);
+}
+
+/* a short leader line pointing back at the layer */
+.layer-labels li::before {
+    content: "";
+    width: 14px;
+    height: 1px;
+    background: var(--sand);
+}
+
+.layer-labels li.is-on {
+    opacity: 1;
+    translate: 0 0;
+    /* enter: a little slower, eased out */
+    transition: opacity 240ms var(--ease-out), translate 240ms var(--ease-out);
+}
+
+html:not(.has-3d) .layer-labels {
+    display: none;
+}
+
 /* tour controls: next-room arrow + "Skip the tour" (top right on phones, bottom right on desktop) */
 .tour-controls {
     position: absolute;
