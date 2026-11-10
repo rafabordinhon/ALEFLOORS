@@ -139,11 +139,23 @@
                 <button type="button" class="room-nav-item" data-room="1"><span class="room-nav-bar" aria-hidden="true"></span>Garage</button>
                 <button type="button" class="room-nav-item" data-room="2"><span class="room-nav-bar" aria-hidden="true"></span>Pool area</button>
             </nav>
+
+            <!-- tour controls: the arrow goes to the next room, "Skip the tour" jumps to the content below -->
+            <div class="tour-controls">
+                <button type="button" class="tour-next" aria-label="Next room"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#chevron-right"></use></svg></button>
+                <a class="tour-skip" href="#after-tour">Skip the tour</a>
+            </div>
+
+            <!-- shown while the 3D rooms load (js/hero-3d.js fills it in) -->
+            <div class="hero-loader" role="status" aria-live="polite" hidden>
+                <span class="hero-loader-bar" aria-hidden="true"><span class="hero-loader-fill"></span></span>
+                <span class="hero-loader-text">Loading the showroom <span class="hero-loader-pct">0%</span></span>
+            </div>
         </div>
     </section>
 
     <!-- Numbers -->
-    <section class="numbers" data-header-dark aria-labelledby="numbers-title">
+    <section class="numbers" id="after-tour" tabindex="-1" data-header-dark aria-labelledby="numbers-title">
         <div class="container-wide">
             <h2 id="numbers-title" class="sr-only">Ale Floors in numbers</h2>
             <ul class="numbers-list" data-reveal-group>
@@ -543,6 +555,9 @@
     </nav>
 
     <script src="js/script.js" defer></script>
+    <script src="js/vendor/gsap.min.js" defer></script>
+    <script src="js/vendor/ScrollTrigger.min.js" defer></script>
+    <script src="js/vendor/lenis.min.js" defer></script>
     <script src="js/home.js" defer></script>
     <script type="module" src="js/hero-3d.js"></script>
 </body>

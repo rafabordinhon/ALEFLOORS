@@ -56,7 +56,9 @@ AREAS = ["Orlando, FL", "Tampa, FL", "Daytona Beach, FL"]
 
 # Per-page settings (pages not listed use the defaults below; blog-*.html are blog posts)
 PAGES = {
-    "index.html": {"nav": "index.html", "schema": "business", "css": ["home"], "js": ["home"], "modules": ["hero-3d"]},
+    # home: GSAP + ScrollTrigger + Lenis (smooth scroll, served locally because of the CSP) before home.js
+    "index.html": {"nav": "index.html", "schema": "business", "css": ["home"],
+                   "js": ["vendor/gsap.min", "vendor/ScrollTrigger.min", "vendor/lenis.min", "home"], "modules": ["hero-3d"]},
     "service.html": {"nav": "service.html", "css": ["services"]},
     "about.html": {"nav": "about.html", "css": ["about"], "schema": "business"},
     "contact.html": {"nav": "contact.html", "css": ["contact"], "js": ["contact"], "schema": "business"},

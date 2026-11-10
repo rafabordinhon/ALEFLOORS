@@ -115,6 +115,34 @@
     }
 
     // ========================================
+    // SMOOTH SCROLL: Lenis eases the page scroll; GSAP's ticker is the one animation loop
+    // (Lenis and the 3D scene in js/hero-3d.js both run on it). Off with reduced motion.
+    // ========================================
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const easeOutQuint = (t) => 1 - Math.pow(1 - t, 5);
+    let lenis = null;
+
+    function initSmoothScroll() {
+        if (reduceMotion || !window.Lenis || !window.gsap || !window.ScrollTrigger) return;
+        window.gsap.registerPlugin(window.ScrollTrigger);
+        lenis = new window.Lenis({ lerp: 0.09, wheelMultiplier: 0.9, touchMultiplier: 1.2 });
+        lenis.on('scroll', window.ScrollTrigger.update);
+        window.gsap.ticker.add((time) => lenis.raf(time * 1000));
+        window.gsap.ticker.lagSmoothing(0);
+        window.aleLenis = lenis;
+    }
+
+    // scroll to a page position: eased with Lenis, native otherwise
+    function scrollToY(top, onDone) {
+        if (lenis) {
+            lenis.scrollTo(top, { duration: 1.3, easing: easeOutQuint, onComplete: onDone });
+            return;
+        }
+        window.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' });
+        if (onDone) window.setTimeout(onDone, reduceMotion ? 0 : 700);
+    }
+
+    // ========================================
     // SHOWROOM HERO: turns scrolling through the tall hero into progress (0..1),
     // picks the active room, swaps captions and (without 3D) the still images.
     // Room changes happen at the same points as the camera stops in js/hero-3d.js.
@@ -126,7 +154,11 @@
         const stills = $$('.hero-still', hero);
         const navItems = $$('.room-nav-item', hero);
         const ROOM_AT = [0, 0.24, 0.68];          // progress where each room starts
-        const SCROLL_TO = [0, 0.52, 0.97];        // where the room-nav buttons take you
+        const SCROLL_TO = [0, 0.5, 0.97];         // where the room-nav buttons take you
+        // the camera holds still at 0..0.1, 0.42..0.58 and 0.9..1 (js/hero-3d.js curveAt);
+        // stopping in between glides on to the next stop in the direction you were going
+        const HOLDS = [[0, 0.1], [0.42, 0.58], [0.9, 1]];
+        const STOPS = [0.05, 0.5, 0.96];
         let room = -1;
         let ticking = false;
 
@@ -186,31 +218,78 @@
             window.dispatchEvent(new CustomEvent('ale:flake', { detail: chip.dataset.flake }));
         }));
 
+        const heroTop = () => hero.getBoundingClientRect().top + window.scrollY;
+        const topFor = (p) => heroTop() + (hero.offsetHeight - window.innerHeight) * p;
+
         const update = () => {
             ticking = false;
             const p = progress();
             setRoom(p >= ROOM_AT[2] ? 2 : p >= ROOM_AT[1] ? 1 : 0);
+            // the active room's bar fills from its start to the next room's start
+            const end = room < 2 ? ROOM_AT[room + 1] : 1;
+            const fill = Math.min(1, Math.max(0, (p - ROOM_AT[room]) / (end - ROOM_AT[room])));
+            if (navItems[room]) navItems[room].style.setProperty('--fill', fill.toFixed(3));
+            hero.classList.toggle('is-last-room', p >= 0.9);
             if (p > 0.12) loadStill(1);       // a little ahead, so the image is ready
             if (p > 0.55) loadStill(2);
         };
 
-        window.addEventListener('scroll', () => {
-            if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
-        }, { passive: true });
+        // with Lenis, ScrollTrigger reports the hero's progress; without it, plain scroll events
+        if (lenis) {
+            window.ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: update, onRefresh: update });
+        } else {
+            window.addEventListener('scroll', () => {
+                if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+            }, { passive: true });
+        }
         window.addEventListener('resize', update);
 
-        navItems.forEach((item, i) => {
-            item.addEventListener('click', () => {
-                const range = hero.offsetHeight - window.innerHeight;
-                const top = hero.getBoundingClientRect().top + window.scrollY + range * SCROLL_TO[i];
-                const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
+        // soft snap: when scrolling stops between two rooms, glide to the next room in that direction.
+        // Never fights the visitor: any new scroll input cancels it (Lenis), and it only acts inside the hero.
+        if (lenis) {
+            let lastDir = 1;
+            let idle = 0;
+            let snapping = false;
+            lenis.on('scroll', ({ direction }) => {
+                if (direction) lastDir = direction;
+                window.clearTimeout(idle);
+                if (snapping) return;
+                idle = window.setTimeout(() => {
+                    const p = progress();
+                    if (p <= 0.02 || p >= 0.98) return;
+                    if (HOLDS.some(([a, b]) => p >= a && p <= b)) return;
+                    const next = lastDir > 0 ? STOPS.find((s) => s > p) : [...STOPS].reverse().find((s) => s < p);
+                    if (next === undefined) return;
+                    snapping = true;
+                    scrollToY(topFor(next), () => { snapping = false; });
+                }, 220);
             });
+        }
+
+        navItems.forEach((item, i) => {
+            item.addEventListener('click', () => scrollToY(topFor(SCROLL_TO[i])));
+        });
+
+        // arrow: next room; after the last room it leaves the tour
+        const next = $('.tour-next', hero);
+        const after = $('#after-tour');
+        const leaveTour = () => scrollToY(heroTop() + hero.offsetHeight, () => after && after.focus({ preventScroll: true }));
+        if (next) next.addEventListener('click', () => {
+            const p = progress();
+            const stop = STOPS.find((s) => s > p + 0.02);
+            if (stop === undefined) leaveTour();
+            else scrollToY(topFor(stop));
+        });
+        const skip = $('.tour-skip', hero);
+        if (skip) skip.addEventListener('click', (event) => {
+            event.preventDefault();
+            leaveTour();
         });
 
         update();
     }
 
+    initSmoothScroll();
     initSampleBoard();
     initLightbox();
     initShowroom();

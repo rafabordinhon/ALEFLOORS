@@ -15,7 +15,7 @@
 
 /* the walk-through needs scrolling room (only with JS; without it the hero is one screen) */
 .js .hero {
-    height: 260vh;
+    height: 300vh;
 }
 
 .hero-stage {
@@ -81,17 +81,18 @@
         linear-gradient(to bottom, rgba(20, 16, 13, 0.55) 0%, rgba(20, 16, 13, 0) 18%);
 }
 
-/* panels: one per room, crossfading */
+/* panels: one per room, crossfading with a short blur (enter a bit slower than exit) */
 .room-panel {
-    transition: opacity 280ms var(--ease-out), transform 280ms var(--ease-out), visibility 0s linear 0s;
+    transition: opacity 420ms var(--ease-out) 60ms, transform 420ms var(--ease-out) 60ms, filter 420ms var(--ease-out) 60ms, visibility 0s linear 0s;
 }
 
 .js .room-panel:not(.is-active) {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(14px);
+    filter: blur(6px);
     visibility: hidden;
     pointer-events: none;
-    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), visibility 0s linear 180ms;
+    transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out), filter 200ms var(--ease-out), visibility 0s linear 200ms;
 }
 
 .hero-inner {
@@ -237,9 +238,14 @@ html:not(.js) .room-caption {
     color: var(--on-dark);
 }
 
-.room-nav-item.is-active .room-nav-bar::after,
 .room-nav-item.is-past .room-nav-bar::after {
     transform: scaleX(1);
+}
+
+/* the active bar fills as you move through its room (js/home.js sets --fill, 0..1) */
+.room-nav-item.is-active .room-nav-bar::after {
+    transform: scaleX(var(--fill, 1));
+    transition: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -250,6 +256,149 @@ html:not(.js) .room-caption {
 
 html:not(.js) .room-nav {
     display: none;
+}
+
+/* tour controls: next-room arrow + "Skip the tour" (top right on phones, bottom right on desktop) */
+.tour-controls {
+    position: absolute;
+    top: calc(var(--header-h) + 12px);
+    right: var(--gutter);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tour-next,
+.tour-skip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    background: rgba(28, 23, 19, 0.45);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    color: var(--on-dark);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), transform 160ms var(--ease-out);
+}
+
+.tour-skip {
+    padding: 0 16px;
+}
+
+.tour-next {
+    width: 40px;
+    padding: 0;
+}
+
+.tour-next .icon {
+    width: 18px;
+    height: 18px;
+    transform: rotate(90deg);   /* chevron pointing down */
+}
+
+.tour-next:active,
+.tour-skip:active {
+    transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .tour-next:hover,
+    .tour-skip:hover {
+        background: rgba(28, 23, 19, 0.7);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+}
+
+/* the arrow nudges down once in a while, inviting the scroll (not with reduced motion) */
+@media (prefers-reduced-motion: no-preference) {
+    .tour-next .icon {
+        animation: tour-nudge 2.8s var(--ease-out) 2s infinite;
+    }
+}
+
+@keyframes tour-nudge {
+    0%, 70%, 100% { translate: 0 0; }
+    80% { translate: 0 3px; }
+}
+
+/* at the end of the tour the arrow has nothing left to show */
+.hero.is-last-room .tour-next {
+    opacity: 0;
+    pointer-events: none;
+}
+
+html:not(.js) .tour-controls {
+    display: none;
+}
+
+/* loading progress of the 3D rooms (the still image of the first room is already on screen) */
+.hero-loader {
+    position: absolute;
+    left: 50%;
+    bottom: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    translate: -50% 0;
+    color: rgba(238, 239, 235, 0.75);
+    font-size: var(--fs-xs);
+    transition: opacity 300ms var(--ease-out);
+}
+
+.hero-loader-bar {
+    width: 140px;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(238, 239, 235, 0.2);
+}
+
+.hero-loader-fill {
+    display: block;
+    height: 100%;
+    background: var(--sand);
+    transform: scaleX(var(--load, 0));
+    transform-origin: left;
+    transition: transform 200ms var(--ease-out);
+}
+
+.hero-loader.is-done {
+    opacity: 0;
+}
+
+@media (min-width: 1024px) {
+    /* next to the room bar (the bottom-right corner belongs to the floating WhatsApp button) */
+    .tour-controls {
+        top: auto;
+        right: auto;
+        bottom: 18px;
+        left: calc(max(var(--gutter), calc((100vw - var(--container-wide)) / 2)) + 444px);
+    }
+
+    .hero-loader {
+        bottom: 96px;
+    }
+}
+
+/* Lenis smooth scrolling (recommended base styles) */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
 }
 
 @media (min-width: 1024px) {

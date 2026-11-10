@@ -7,19 +7,23 @@
 // Three.js 0.170.0 is served from js/vendor/ and only loaded on capable devices;
 // otherwise still renders of the rooms are shown (see index.html).
 // URL options: ?no3d shows the stills; ?shot=0|1|2 freezes a room (used to make the stills);
-// ?oldA builds the living room from boxes like before (to compare with the Blender version).
+// ?old builds the rooms from boxes like before (to compare); ?tier=low|mid|high forces a quality level.
 //
-// Living room (room A): walls, ceiling and furniture come from Blender (assets/3d/room-a.glb) with
-// light and shadows baked into one texture; the floor keeps its live material and gets a baked
-// light map. Made by the scripts in the ALEFLOORS-blender work folder (see PLANO.md there).
+// v2: each room's walls, ceiling and furniture come from Blender (assets/3d/room-{a,b,c}.glb) with
+// light and shadows baked into one texture per room (already tone mapped, so it skips three's tone
+// mapping). The floors keep their live materials (metallic, flake with live color, polished deck)
+// and get a baked light map. Live on top: reflections, the turning floor sample with a real shadow,
+// the water with ripples and caustics, dust, beams, photos and the logo.
+// The Blender scripts live in the ALEFLOORS-blender work folder (see docs/redesign/2026-11-09-home-3d-v2.md).
 
 const canvas = document.getElementById('heroCanvas');
 const hero = document.getElementById('showroom');
 const params = new URLSearchParams(window.location.search);
 const SHOT = params.has('shot') ? Math.min(2, Math.max(0, parseInt(params.get('shot'), 10) || 0)) : null;
-const OLD_A = params.has('oldA');
+const OLD = params.has('old') || params.has('oldA');
+const FORCED_TIER = ['low', 'mid', 'high'].includes(params.get('tier')) ? params.get('tier') : null;
 const MODELS = 'assets/3d/';
-const FLOOR_LIGHT_GAIN = 4;      // the floor light map was stored at 1/4 so bright spots don't clip
+const FLOOR_LIGHT_GAIN = 4;      // floor light maps are stored at 1/4 so bright spots don't clip
 
 // real colors of six flake blends (from the catalog swatches): [color, share]
 const FLAKES = {
@@ -75,6 +79,11 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     renderer.setPixelRatio(pixelRatio);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    // one real-time shadow: the turning floor sample under its spot (the rooms' shadows are baked).
+    // The shadow map is only redrawn while the living room is on screen.
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.autoUpdate = false;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x17130f);
@@ -175,20 +184,20 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     // Layout (top view): A = living room, B = garage (west of A), C = pool area (north of B)
     //   C: x -13.5..-4.5, z -13.5..-4.5
     //   B: x -13.5..-4.5, z  -4.5.. 4.5     A: x -4.5..4.5, z -4.5..7 (open to the south)
-    if (OLD_A) {                                // otherwise these come baked in room-a.glb
+    if (OLD) {                                  // otherwise all of these come baked in room-{a,b,c}.glb
         wall('x', -4.5, 4.5, -4.5);             // A north
         wall('z', -4.5, 7, 4.5);                // A east
         wall('z', -4.5, 7, -4.5, 0);            // A west, door to B
         ceilingOver(-4.5, 4.5, -4.5, 7);
+        wall('z', -4.5, 4.5, -13.5);            // B west
+        wall('x', -13.5, -4.5, 4.5);            // B south
+        wall('x', -13.5, -4.5, -4.5, -9);       // B north, door to C
+        wall('z', -13.5, -4.5, -13.5);          // C west
+        wall('z', -13.5, -4.5, -4.5);           // C east
+        wall('x', -13.5, -4.5, -13.5);          // C north
+        ceilingOver(-13.5, -4.5, -4.5, 4.5);
+        ceilingOver(-13.5, -4.5, -13.5, -4.5);
     }
-    wall('z', -4.5, 4.5, -13.5);                // B west
-    wall('x', -13.5, -4.5, 4.5);                // B south
-    wall('x', -13.5, -4.5, -4.5, -9);           // B north, door to C
-    wall('z', -13.5, -4.5, -13.5);              // C west
-    wall('z', -13.5, -4.5, -4.5);               // C east
-    wall('x', -13.5, -4.5, -13.5);              // C north
-    ceilingOver(-13.5, -4.5, -4.5, 4.5);
-    ceilingOver(-13.5, -4.5, -13.5, -4.5);
 
     // ---------- floors ----------
     const floorMat = (opacity, roughness, metalness = 0) => new THREE.MeshPhysicalMaterial({
@@ -265,8 +274,9 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     window.addEventListener('ale:flake', onFlake);
 
     // ---------- light: soft fill, one warm light per room, downlights with beams ----------
-    scene.add(new THREE.HemisphereLight(0xffe7cc, 0x2a2018, 0.45));
-    (OLD_A ? [[0, 0.5], [-9, 0], [-9, -9]] : [[-9, 0], [-9, -9]]).forEach(([x, z]) => {
+    // v2: the rooms' light is baked; the hemisphere only lifts the live floors and objects a little
+    scene.add(new THREE.HemisphereLight(0xffe7cc, 0x2a2018, OLD ? 0.45 : 0.3));
+    if (OLD) [[0, 0.5], [-9, 0], [-9, -9]].forEach(([x, z]) => {
         const light = new THREE.PointLight(0xffcf96, 28, 11, 2);
         light.position.set(x, H - 1.1, z);
         scene.add(light);
@@ -316,9 +326,10 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
             scene.add(b);
         }
     };
-    [[-2.6, -2.2], [2.6, -2.2], [-2.6, 2.8], [2.6, 2.8]].forEach(([x, z]) => downlight(x, z, true, !OLD_A));
-    [[-11.4, -2.2], [-6.6, -2.2], [-11.4, 2.4], [-6.6, 2.4]].forEach(([x, z]) => downlight(x, z));
-    [[-11.6, -6.6], [-6.4, -6.6], [-11.6, -12], [-6.4, -12]].forEach(([x, z]) => downlight(x, z, false));
+    [[-2.6, -2.2], [2.6, -2.2], [-2.6, 2.8], [2.6, 2.8]].forEach(([x, z]) => downlight(x, z, true, !OLD));
+    // garage (v2: LED battens baked in room-b.glb) and pool area (spots baked in room-c.glb)
+    if (OLD) [[-11.4, -2.2], [-6.6, -2.2], [-11.4, 2.4], [-6.6, 2.4]].forEach(([x, z]) => downlight(x, z));
+    if (OLD) [[-11.6, -6.6], [-6.4, -6.6], [-11.6, -12], [-6.4, -12]].forEach(([x, z]) => downlight(x, z, false));
 
     // dust drifting in the air (very light)
     const DUST = mobile ? 160 : 320;
@@ -371,7 +382,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     // ---------- room A: living room ----------
     // sofa against the north wall, coffee table, slat wall + LED, plant, pendant, plinth with the sample.
     // The Blender version (room-a.glb) has all of these; only the animated sample stays here.
-    if (OLD_A) {
+    if (OLD) {
         box(2.8, 0.42, 0.95, M.fabric, -1.2, 0.21, -3.7);
         box(2.8, 0.55, 0.22, M.fabric, -1.2, 0.69, -4.1);
         box(0.22, 0.6, 0.95, M.fabric, -2.49, 0.3, -3.7);
@@ -393,8 +404,8 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     // walnut slats behind the sofa and on the pool area's west wall (one draw call)
     const slatGeo = new THREE.BoxGeometry(0.07, H - 0.25, 0.06);
     const slatAt = [];
-    if (OLD_A) for (let x = -3.6; x <= 1.2; x += 0.13) slatAt.push([x, -4.36, false]);
-    for (let z = -12.6; z <= -5.4; z += 0.13) slatAt.push([-13.36, z, true]);
+    if (OLD) for (let x = -3.6; x <= 1.2; x += 0.13) slatAt.push([x, -4.36, false]);
+    if (OLD) for (let z = -12.6; z <= -5.4; z += 0.13) slatAt.push([-13.36, z, true]);
     const slats = new THREE.InstancedMesh(slatGeo, M.walnut, slatAt.length);
     const mtx = new THREE.Matrix4();
     slatAt.forEach(([a, b, side], i) => {
@@ -404,10 +415,10 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     });
     scene.add(slats);
     keep(slatGeo);
-    if (OLD_A) box(4.9, 0.03, 0.05, M.led, -1.2, 0.1, -4.32);
-    box(0.05, 0.03, 7.3, M.led, -13.32, 0.1, -9);
+    if (OLD) box(4.9, 0.03, 0.05, M.led, -1.2, 0.1, -4.32);
+    if (OLD) box(0.05, 0.03, 7.3, M.led, -13.32, 0.1, -9);
     // plant: dark pot with crossed leaf cards
-    if (OLD_A) {
+    if (OLD) {
         mesh(new THREE.CylinderGeometry(0.28, 0.22, 0.75, 24), M.charcoal, 3.6, 0.375, -3.5);
         const leafMat = new THREE.MeshStandardMaterial({
             map: canvasTexture(128, 256, (c) => {
@@ -435,14 +446,27 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     }
     // plinth with the layered floor sample, under its own spot (baked in room-a.glb; kept as the spot's target)
     const plinth = box(1.2, 0.78, 1.2, M.charcoal, 2.3, 0.39, -0.8);
-    plinth.visible = OLD_A;
+    plinth.visible = OLD;
     const sample = new THREE.Group();
     sample.position.set(2.3, 0.86, -0.8);
     scene.add(sample);
     const spot = new THREE.SpotLight(0xffe0b8, 40, 7, 0.36, 0.7, 2);
     spot.position.set(2.0, H - 0.1, 0.2);
     spot.target = plinth;
+    // the sample's shadow on top of the plinth: a small, soft shadow map (only redrawn in room A)
+    spot.castShadow = true;
+    spot.shadow.mapSize.set(mobile ? 512 : 1024, mobile ? 512 : 1024);
+    spot.shadow.camera.near = 1.5;
+    spot.shadow.camera.far = 4.5;
+    spot.shadow.bias = -0.0004;
+    spot.shadow.radius = 4;
     scene.add(spot);
+    if (!OLD) {
+        const shadowMat = new THREE.ShadowMaterial({ opacity: 0.45 });
+        const catcher = mesh(new THREE.PlaneGeometry(1.2, 1.2), shadowMat, 2.3, 0.782, -0.8);
+        catcher.rotation.x = -Math.PI / 2;
+        catcher.receiveShadow = true;
+    }
     const sampleMats = [
         new THREE.MeshStandardMaterial({ color: 0xa9a49c, roughness: 0.9 }),
         new THREE.MeshPhysicalMaterial({ color: 0xc89a55, roughness: 0.3, transparent: true, opacity: 0.85 }),
@@ -453,68 +477,106 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     const sampleLayers = [0.2, 0.02, 0.045, 0.02].map((h, i) => {
         const m = box(0.95, h, 0.66, sampleMats[i], 0, 0, 0, sample);
         m.userData = { restY: stackY + h / 2, i };
+        m.castShadow = i < 3;            // the clear top coat doesn't cast
         stackY += h;
         return m;
     });
     load(IMG + 'hero/concrete.webp', [1.4, 1], (t) => { sampleMats[0].map = t; sampleMats[0].color.set(0xffffff); sampleMats[0].needsUpdate = true; });
-    framed(IMG + '1-home/finishedServices/FS5.webp', 'z', 4.5, 0.6, -1, 1.5, 1.1, OLD_A);
-    framed(IMG + '1-home/finishedServices/FS8.webp', 'z', 4.5, 3.6, -1, 1.5, 1.1, OLD_A);
-    framed(IMG + '1-home/finishedServices/FS7.webp', 'z', -4.5, 3.8, 1, 1.3, 1.1, OLD_A);
+    framed(IMG + '1-home/finishedServices/FS5.webp', 'z', 4.5, 0.6, -1, 1.5, 1.1, OLD);
+    framed(IMG + '1-home/finishedServices/FS8.webp', 'z', 4.5, 3.6, -1, 1.5, 1.1, OLD);
+    framed(IMG + '1-home/finishedServices/FS7.webp', 'z', -4.5, 3.8, 1, 1.3, 1.1, OLD);
 
-    // ---------- room A from Blender: one mesh, colors and light baked into one texture ----------
-    // The texture already has Blender's look (AgX tone mapping), so it skips three's tone mapping;
-    // render() fades its color with the intro exposure instead.
-    let bakedA = null;
-    function loadRoomA() {
-        if (OLD_A) return Promise.resolve();
+    // ---------- the three rooms from Blender: one mesh each, colors and light baked into one texture ----------
+    // The textures already have Blender's look (AgX tone mapping), so they skip three's tone mapping;
+    // render() fades their color with the intro exposure instead. Progress shows in .hero-loader.
+    const bakedMats = [];
+    const loaderEl = hero.querySelector('.hero-loader');
+    function loadRooms() {
+        if (OLD) return Promise.resolve();
+        const manager = new THREE.LoadingManager();
+        if (loaderEl) loaderEl.hidden = false;
+        manager.onProgress = (url, done, total) => {
+            if (!loaderEl) return;
+            const p = total ? done / total : 0;
+            loaderEl.style.setProperty('--load', p.toFixed(3));
+            loaderEl.querySelector('.hero-loader-pct').textContent = Math.round(p * 100) + '%';
+        };
+        const texLoader = new THREE.TextureLoader(manager);
+        const gltfLoader = new GLTFLoader(manager);
         const tex = (url, flipY) => new Promise((resolve, reject) => {
-            const t = loader.load(url, () => resolve(t), undefined, reject);
+            const t = texLoader.load(url, () => resolve(t), undefined, reject);
             t.flipY = flipY;                 // glTF UVs expect flipY = false
             t.colorSpace = THREE.SRGBColorSpace;
             t.anisotropy = anisotropy;
             textures.push(t);
         });
-        return Promise.all([
-            new GLTFLoader().loadAsync(MODELS + 'room-a.glb'),
-            tex(MODELS + 'room-a-atlas.webp', false),
-            tex(MODELS + 'room-a-floor-light.webp', true),
+        // each floor keeps its live material; its UVs (uv for A/B, uv1 for the pool deck) match the bake
+        const floors = { a: [metallicMat, 0], b: [flakeMat, 0], c: [deckMat, 1] };
+        return Promise.all(['a', 'b', 'c'].map((r) => Promise.all([
+            gltfLoader.loadAsync(MODELS + `room-${r}.glb`),
+            tex(MODELS + `room-${r}-atlas.webp`, false),
+            tex(MODELS + `room-${r}-floor-light.webp`, true),
         ]).then(([gltf, atlas, floorLight]) => {
             const baked = new THREE.MeshBasicMaterial({ map: atlas, toneMapped: false });
             materials.push(baked);
-            bakedA = baked;
+            bakedMats.push(baked);
             gltf.scene.traverse((o) => {
                 if (!o.isMesh) return;
                 o.material = baked;
                 geometries.push(o.geometry);
             });
             scene.add(gltf.scene);
-            // floor: same UVs as its PlaneGeometry; the light map adds the baked light and shadows
-            metallicMat.lightMap = floorLight;
-            metallicMat.lightMapIntensity = FLOOR_LIGHT_GAIN;
-            metallicMat.needsUpdate = true;
+            const [mat, channel] = floors[r];
+            floorLight.channel = channel;
+            mat.lightMap = floorLight;
+            mat.lightMapIntensity = FLOOR_LIGHT_GAIN;
+            mat.needsUpdate = true;
+        }))).finally(() => {
+            if (!loaderEl) return;
+            loaderEl.classList.add('is-done');
+            window.setTimeout(() => { loaderEl.hidden = true; }, 400);
         });
     }
 
     // ---------- room B: garage ----------
-    // sectional garage door (west wall) with a light strip above, cabinets, parking stripes
-    box(0.08, 2.7, 4.6, M.metal, -13.36, 1.35, 0);
-    for (let i = 1; i < 5; i++) box(0.1, 0.025, 4.6, M.gap, -13.3, i * 0.54, 0);
-    box(0.06, 0.03, 4.4, M.led, -13.32, 2.9, 0);
-    for (let i = 0; i < 3; i++) {
-        box(0.8, 2.0, 0.5, M.graphite, -12.95 + i * 0.83, 1.0, -4.15);
-        box(0.02, 0.5, 0.02, M.metal, -12.62 + i * 0.83, 1.15, -3.89);
+    // v2: door, cabinets, shelves, workbench, covered car, tires and bike are in room-b.glb
+    if (OLD) {
+        // sectional garage door (west wall) with a light strip above, cabinets, parking stripes
+        box(0.08, 2.7, 4.6, M.metal, -13.36, 1.35, 0);
+        for (let i = 1; i < 5; i++) box(0.1, 0.025, 4.6, M.gap, -13.3, i * 0.54, 0);
+        box(0.06, 0.03, 4.4, M.led, -13.32, 2.9, 0);
+        for (let i = 0; i < 3; i++) {
+            box(0.8, 2.0, 0.5, M.graphite, -12.95 + i * 0.83, 1.0, -4.15);
+            box(0.02, 0.5, 0.02, M.metal, -12.62 + i * 0.83, 1.15, -3.89);
+        }
+        [-11.2, -7].forEach((x) => flat(0.12, 4.6, M.stripe, x, 0.6, 0.007));
     }
-    [-11.2, -7].forEach((x) => flat(0.12, 4.6, M.stripe, x, 0.6, 0.007));
-    framed(IMG + '2-service/homeServices/garage.webp', 'x', -4.5, -6.05, 1, 1.5, 1.14);
-    framed(IMG + '1-home/generalServices/epoxyGarageFloor.webp', 'x', 4.5, -9, -1, 1.9, 1.42);
+    framed(IMG + '2-service/homeServices/garage.webp', 'x', -4.5, -6.05, 1, 1.5, 1.14, OLD);
+    framed(IMG + '1-home/generalServices/epoxyGarageFloor.webp', 'x', 4.5, -9, -1, 1.9, 1.42, OLD);
 
     // ---------- room C: pool area ----------
     // polished concrete deck around a sunken, glowing pool; stone coping; lounger; backlit logo
     const pool = { x0: -11.3, x1: -6.3, z0: -11.6, z1: -8.8 };
-    flat(9, 1.9, deckMat, -9, -12.55);                                    // north strip
-    flat(9, 4.3, deckMat, -9, -6.65);                                     // south strip
-    flat(pool.x0 + 13.5, 2.8, deckMat, (pool.x0 - 13.5) / 2, -10.2);      // west strip
-    flat(-4.5 - pool.x1, 2.8, deckMat, (pool.x1 - 4.5) / 2, -10.2);       // east strip
+    // the deck's baked light map covers the whole room: uv1 = position in the room (x -13.5..-4.5,
+    // z from -4.5 at the bottom of the image to -13.5 at the top), same as scripts/bake_room.py
+    const roomUV1 = (m, x0, x1, zS, zN) => {
+        m.updateMatrixWorld();
+        const pos = m.geometry.attributes.position;
+        const uv1 = new Float32Array(pos.count * 2);
+        const v = new THREE.Vector3();
+        for (let i = 0; i < pos.count; i++) {
+            v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+            uv1[i * 2] = (v.x - x0) / (x1 - x0);
+            uv1[i * 2 + 1] = (zS - v.z) / (zS - zN);
+        }
+        m.geometry.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2));
+    };
+    [
+        flat(9, 1.9, deckMat, -9, -12.55),                                    // north strip
+        flat(9, 4.3, deckMat, -9, -6.65),                                     // south strip
+        flat(pool.x0 + 13.5, 2.8, deckMat, (pool.x0 - 13.5) / 2, -10.2),      // west strip
+        flat(-4.5 - pool.x1, 2.8, deckMat, (pool.x1 - 4.5) / 2, -10.2),       // east strip
+    ].forEach((m) => roomUV1(m, -13.5, -4.5, -4.5, -13.5));
     load(IMG + 'hero/polished.webp', [3, 3], (t) => { deckMat.map = t; deckMat.needsUpdate = true; });
     const pw = pool.x1 - pool.x0;
     const pd = pool.z1 - pool.z0;
@@ -527,10 +589,50 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     box(pw, 1.2, 0.05, tile, pcx, -0.6, pool.z1);
     box(0.05, 1.2, pd, tile, pool.x0, -0.6, pcz);
     box(0.05, 1.2, pd, tile, pool.x1, -0.6, pcz);
-    box(pw + 0.6, 0.06, 0.3, M.stone, pcx, 0.03, pool.z0 - 0.15);
-    box(pw + 0.6, 0.06, 0.3, M.stone, pcx, 0.03, pool.z1 + 0.15);
-    box(0.3, 0.06, pd, M.stone, pool.x0 - 0.15, 0.03, pcz);
-    box(0.3, 0.06, pd, M.stone, pool.x1 + 0.15, 0.03, pcz);
+    if (OLD) {                           // v2: the stone coping is in room-c.glb
+        box(pw + 0.6, 0.06, 0.3, M.stone, pcx, 0.03, pool.z0 - 0.15);
+        box(pw + 0.6, 0.06, 0.3, M.stone, pcx, 0.03, pool.z1 + 0.15);
+        box(0.3, 0.06, pd, M.stone, pool.x0 - 0.15, 0.03, pcz);
+        box(0.3, 0.06, pd, M.stone, pool.x1 + 0.15, 0.03, pcz);
+    }
+    // caustics: two layers of a bright web pattern drifting over the pool floor (additive, very cheap)
+    const caustic = canvasTexture(256, 256, (c) => {
+        c.fillStyle = '#000';
+        c.fillRect(0, 0, 256, 256);
+        c.strokeStyle = 'rgba(190,245,255,0.85)';
+        c.lineCap = 'round';
+        let seed = 3;
+        const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+        for (let i = 0; i < 70; i++) {          // wavy closed loops, wrapped so the texture tiles
+            const cx = rnd() * 256;
+            const cy = rnd() * 256;
+            const r = 10 + rnd() * 22;
+            c.lineWidth = 1 + rnd() * 2.2;
+            [-256, 0, 256].forEach((ox) => [-256, 0, 256].forEach((oy) => {
+                c.beginPath();
+                for (let k = 0; k <= 24; k++) {
+                    const a = (k / 24) * Math.PI * 2;
+                    const rr = r * (1 + 0.25 * Math.sin(a * 3 + i));
+                    const px = cx + ox + Math.cos(a) * rr;
+                    const py = cy + oy + Math.sin(a) * rr;
+                    if (k) c.lineTo(px, py); else c.moveTo(px, py);
+                }
+                c.stroke();
+            }));
+        }
+    });
+    caustic.colorSpace = THREE.SRGBColorSpace;
+    caustic.wrapS = caustic.wrapT = THREE.RepeatWrapping;
+    const causticLayers = [[1.6, 0.95, 0.35], [2.3, 1.4, 0.25]].map(([rx, ry, opacity]) => {
+        const t = caustic.clone();
+        t.repeat.set(rx, ry);
+        t.needsUpdate = true;
+        textures.push(t);
+        const m = new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, color: 0x9fe8f5 });
+        materials.push(m);
+        flat(pw - 0.06, pd - 0.06, m, pcx, pcz, -1.17);
+        return t;
+    });
     // water: ripple normals painted once, scrolled every frame
     const rippleNormal = canvasTexture(256, 256, (c) => {
         const img = c.createImageData(256, 256);
@@ -560,11 +662,13 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     const poolLight = new THREE.PointLight(0x6fd3e0, 6, 6, 2);
     poolLight.position.set(pcx, 0.3, pcz);
     scene.add(poolLight);
-    box(0.7, 0.3, 1.9, M.stone, -11.6, 0.15, -6.4);
-    const loungerBack = box(0.7, 0.06, 0.8, M.fabricLight, -11.6, 0.55, -7.15);
-    loungerBack.rotation.x = 0.7;
-    framed(IMG + '2-service/homeServices/pool-600.webp', 'z', -4.5, -7.6, -1, 1.9, 1.42);
-    framed(IMG + '1-home/generalServices/polyAsparticPoolDeck.webp', 'z', -4.5, -11.4, -1, 1.8, 1.15);
+    if (OLD) {                           // v2: three teak loungers, umbrella, plants etc. are in room-c.glb
+        box(0.7, 0.3, 1.9, M.stone, -11.6, 0.15, -6.4);
+        const loungerBack = box(0.7, 0.06, 0.8, M.fabricLight, -11.6, 0.55, -7.15);
+        loungerBack.rotation.x = 0.7;
+    }
+    framed(IMG + '2-service/homeServices/pool-600.webp', 'z', -4.5, -7.6, -1, 1.9, 1.42, OLD);
+    framed(IMG + '1-home/generalServices/polyAsparticPoolDeck.webp', 'z', -4.5, -11.4, -1, 1.8, 1.15, OLD);
     // backlit logo on the north wall: the end of the walk
     const logoTexture = canvasTexture(1024, 256, () => {});
     const drawLogo = () => {
@@ -657,17 +761,46 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         mirror.getRenderTarget().setSize(w, h);
     }
 
+    // ---------- quality levels: high = everything; mid = lower resolution; low = also no mirror,
+    // dust or live shadow (floors become opaque). Starts at mid on phones; drops on its own when slow.
+    const TIERS = ['low', 'mid', 'high'];
+    const floorOpacity = new Map([[metallicMat, metallicMat.opacity], [flakeMat, flakeMat.opacity]]);
+    let tier = 'high';
+    function applyTier(next) {
+        tier = next;
+        const low = tier === 'low';
+        mirror.visible = !low;
+        floorOpacity.forEach((opacity, m) => { m.opacity = low ? 1 : opacity; });
+        dust.visible = !low;
+        if (spot.castShadow === low) {           // recompiles the few materials that receive it, once
+            spot.castShadow = !low;
+            renderer.shadowMap.needsUpdate = true;
+        }
+        const cap = tier === 'high' ? (mobile ? 1.5 : 2) : tier === 'mid' ? 1.25 : 1;
+        if (pixelRatio > cap) {
+            pixelRatio = cap;
+            renderer.setPixelRatio(pixelRatio);
+            resize();
+        }
+    }
+    applyTier(FORCED_TIER || (mobile ? 'mid' : 'high'));
+
     function render(now) {
         const dt = Math.min((now - lastTime) / 1000, 0.05);
-        // keep it fluid: if frames stay slow, render at a lower resolution
-        if (SHOT === null && pixelRatio > 1) {
+        // keep it fluid: if frames stay slow (~under 40 fps for a second and a half), step down:
+        // first the resolution, then the quality level
+        if (SHOT === null && !FORCED_TIER && (pixelRatio > 1 || tier !== 'low')) {
             frameCount++;
             if (dt > 0.026) slowFrames++;
             if (frameCount >= 90) {
                 if (slowFrames > 45) {
-                    pixelRatio = Math.max(1, pixelRatio - 0.25);
-                    renderer.setPixelRatio(pixelRatio);
-                    resize();
+                    if (pixelRatio > 1) {
+                        pixelRatio = Math.max(1, pixelRatio - 0.25);
+                        renderer.setPixelRatio(pixelRatio);
+                        resize();
+                    } else {
+                        applyTier(TIERS[TIERS.indexOf(tier) - 1]);
+                    }
                 }
                 frameCount = 0;
                 slowFrames = 0;
@@ -685,7 +818,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         pathLook.getPoint(u, camLook);
         const intro = SHOT !== null ? 1 : 1 - Math.pow(1 - clamp01(t / 1.4), 3);
         renderer.toneMappingExposure = 0.35 + 0.65 * intro;
-        if (bakedA) bakedA.color.setScalar(renderer.toneMappingExposure);
+        bakedMats.forEach((m) => m.color.setScalar(renderer.toneMappingExposure));
         const sway = SHOT !== null ? 0 : Math.sin(t * 0.3) * 0.05;
         camera.position.set(camPos.x + tilt.x * 0.22 + sway, camPos.y - tilt.y * 0.1, camPos.z + (1 - intro) * 1.2);
         camLook.x += tilt.x * 0.5;
@@ -697,13 +830,18 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         const gap = 0.02 + (SHOT !== null ? 0.03 : 0.03 * (0.5 + 0.5 * Math.sin(t * 0.9)));
         sampleLayers.forEach((m) => { m.position.y = m.userData.restY + m.userData.i * gap; });
         rippleNormal.offset.set(t * 0.02, t * 0.013);
+        causticLayers[0].offset.set(t * 0.03, t * 0.017);
+        causticLayers[1].offset.set(-t * 0.022, t * 0.028);
         dust.rotation.y = Math.sin(t * 0.05) * 0.02;
         dust.position.y = Math.sin(t * 0.2) * 0.05;
+
+        // the sample's shadow only needs redrawing while the living room is on screen
+        const room = roomAt(smoothProgress);
+        if (spot.castShadow && room === 0) renderer.shadowMap.needsUpdate = true;
 
         renderer.render(scene, camera);
 
         // pin the active room's hotspot; hide it when behind the camera or off screen
-        const room = roomAt(smoothProgress);
         const width = hero.clientWidth;
         const height = window.innerHeight;
         spotEls.forEach((el, i) => {
@@ -743,21 +881,27 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         }));
     }
 
+    // one animation loop for the page: GSAP's ticker (it also drives Lenis, see js/home.js);
+    // plain requestAnimationFrame when GSAP isn't there
+    const ticker = window.gsap && window.gsap.ticker;
+    const tick = () => render(performance.now());
     function loop(now) {
         if (!running) return;
         render(now);
         frame = window.requestAnimationFrame(loop);
     }
-    let ready = false;   // set once the floor texture and room A are loaded (see the end of start)
+    let ready = false;   // set once the floor texture and the rooms are loaded (see the end of start)
     function play() {
         if (running || document.hidden || !ready) return;
         running = true;
         lastTime = performance.now();
-        frame = window.requestAnimationFrame(loop);
+        if (ticker) ticker.add(tick);
+        else frame = window.requestAnimationFrame(loop);
     }
     function pause() {
         running = false;
-        window.cancelAnimationFrame(frame);
+        if (ticker) ticker.remove(tick);
+        else window.cancelAnimationFrame(frame);
     }
 
     let heroVisible = true;
@@ -806,7 +950,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     // start once the floor and the Blender room are in; if the room fails, keep the stills
     Promise.all([
         load(IMG + 'hero/metallic.webp', [1, 1], (t) => { metallicMat.map = t; metallicMat.needsUpdate = true; }),
-        loadRoomA(),
+        loadRooms(),
     ]).then(() => {
         ready = true;
         startTime = performance.now();
