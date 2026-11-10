@@ -741,8 +741,26 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
 
     // ---------- hotspots (HTML), pinned to points on each floor ----------
     const spotEls = Array.from(hero.querySelectorAll('.hotspot'));
-    const anchors = [V(0.4, 0.05, 0.6), V(-10.2, 0.05, -1.0), V(-10.6, 0.08, -8.4)];
+    const anchors = [V(1.1, 0.05, -1.7), V(-10.2, 0.05, -1.0), V(-10.6, 0.08, -8.4)];
     const projected = new THREE.Vector3();
+    // each room's text block (stage coordinates, padded): a hotspot that would land on the text is
+    // hidden, so it never covers copy or steals a tap from a button. Measured on resize only.
+    const copyEls = [hero.querySelector('.hero-copy'), ...hero.querySelectorAll('.room-caption')];
+    let copyRects = [];
+    const measureCopy = () => {
+        const stage = hero.querySelector('.hero-stage').getBoundingClientRect();
+        copyRects = copyEls.map((el) => {
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { l: r.left - stage.left, r: r.right - stage.left, t: r.top - stage.top, b: r.bottom - stage.top };
+        });
+    };
+    // hysteresis: hides within 24 px of the text, shows again only beyond 48 px (no flicker at the edge)
+    const overCopy = (i, x, y, wasOn) => {
+        const c = copyRects[i];
+        const pad = wasOn ? 24 : 48;
+        return !!c && x > c.l - pad && x < c.r + pad && y > c.t - pad && y < c.b + pad;
+    };
 
     // ---------- state + loop ----------
     const pointer = { x: 0, y: 0 };
@@ -776,7 +794,9 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         camera.updateProjectionMatrix();
         const [w, h] = reflectorSize();
         mirror.getRenderTarget().setSize(w, h);
+        measureCopy();
     }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureCopy);
 
     // ---------- quality levels: high = everything; mid = lower resolution; low = also no mirror,
     // dust or live shadow (floors become opaque). Starts at mid on phones; drops on its own when slow.
@@ -863,11 +883,11 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         const height = window.innerHeight;
         spotEls.forEach((el, i) => {
             projected.copy(anchors[i]).project(camera);
-            const on = SHOT === null && i === room && projected.z < 1 && Math.abs(projected.x) < 0.9 && Math.abs(projected.y) < 0.9;
-            el.classList.toggle('is-on', on);
-            if (!on) return;
             const x = (projected.x * 0.5 + 0.5) * width;
             const y = (-projected.y * 0.5 + 0.5) * height;
+            const on = SHOT === null && i === room && projected.z < 1 && Math.abs(projected.x) < 0.9 && Math.abs(projected.y) < 0.9 && !overCopy(i, x, y, el.classList.contains('is-on'));
+            el.classList.toggle('is-on', on);
+            if (!on) return;
             el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
             const card = document.getElementById(el.getAttribute('aria-controls'));
             if (card && !card.hidden) {
