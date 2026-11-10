@@ -60,6 +60,7 @@ function whenIdle(callback) {
 
 if (canUse3D()) {
     whenIdle(() => {
+        performance.mark('hero3d:idle');
         Promise.all([import('./vendor/three.module.min.js'), import('./vendor/RoomEnvironment.js'), import('./vendor/Reflector.js'), import('./vendor/GLTFLoader.js')])
             .then(([THREE, env, refl, gltf]) => start(THREE, env.RoomEnvironment, refl.Reflector, gltf.GLTFLoader))
             .catch((error) => console.warn('3D hero disabled:', error));
@@ -67,6 +68,7 @@ if (canUse3D()) {
 }
 
 function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
+    performance.mark('hero3d:start');   // marks: idle -> start -> loaded -> first-frame (see DevTools > Performance)
     const mobile = window.innerWidth < 768;
     const IMG = 'assets/images/';
     const H = 3.6;            // ceiling height
@@ -512,10 +514,24 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         });
         // each floor keeps its live material; its UVs (uv for A/B, uv1 for the pool deck) match the bake
         const floors = { a: [metallicMat, 0], b: [flakeMat, 0], c: [deckMat, 1] };
+        const size = mobile ? '-m' : '';         // phones get the 1024 px textures (a quarter of the bytes)
+        // the models come gzipped (less than half the bytes; the host doesn't compress .glb) and are
+        // unpacked here; browsers without DecompressionStream load the plain .glb
+        const model = (url) => {
+            if (!('DecompressionStream' in window)) return gltfLoader.loadAsync(url);
+            manager.itemStart(url);
+            return fetch(url + '.gz')
+                .then((res) => {
+                    if (!res.ok) throw new Error(res.status + ' ' + url);
+                    return new Response(res.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+                })
+                .then((buffer) => gltfLoader.parseAsync(buffer, MODELS))
+                .finally(() => manager.itemEnd(url));
+        };
         return Promise.all(['a', 'b', 'c'].map((r) => Promise.all([
-            gltfLoader.loadAsync(MODELS + `room-${r}.glb`),
-            tex(MODELS + `room-${r}-atlas.webp`, false),
-            tex(MODELS + `room-${r}-floor-light.webp`, true),
+            model(MODELS + `room-${r}.glb`),
+            tex(MODELS + `room-${r}-atlas${size}.webp`, false),
+            tex(MODELS + `room-${r}-floor-light${size}.webp`, true),
         ]).then(([gltf, atlas, floorLight]) => {
             const baked = new THREE.MeshBasicMaterial({ map: atlas, toneMapped: false });
             materials.push(baked);
@@ -531,11 +547,12 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
             mat.lightMap = floorLight;
             mat.lightMapIntensity = FLOOR_LIGHT_GAIN;
             mat.needsUpdate = true;
-        }))).finally(() => {
-            if (!loaderEl) return;
-            loaderEl.classList.add('is-done');
-            window.setTimeout(() => { loaderEl.hidden = true; }, 400);
-        });
+        })));
+    }
+    function hideLoader() {
+        if (!loaderEl || loaderEl.hidden) return;
+        loaderEl.classList.add('is-done');
+        window.setTimeout(() => { loaderEl.hidden = true; }, 400);
     }
 
     // ---------- room B: garage ----------
@@ -784,7 +801,6 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         }
     }
     applyTier(FORCED_TIER || (mobile ? 'mid' : 'high'));
-
     function render(now) {
         const dt = Math.min((now - lastTime) / 1000, 0.05);
         // keep it fluid: if frames stay slow (~under 40 fps for a second and a half), step down:
@@ -839,6 +855,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         const room = roomAt(smoothProgress);
         if (spot.castShadow && room === 0) renderer.shadowMap.needsUpdate = true;
 
+        if (firstFrame) performance.mark('hero3d:render');
         renderer.render(scene, camera);
 
         // pin the active room's hotspot; hide it when behind the camera or off screen
@@ -864,6 +881,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
 
         if (firstFrame) {
             firstFrame = false;
+            performance.mark('hero3d:first-frame');
             document.documentElement.classList.add('has-3d');
             loadPhotos();
         }
@@ -895,6 +913,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
         if (running || document.hidden || !ready) return;
         running = true;
         lastTime = performance.now();
+        if (firstFrame) performance.mark('hero3d:play');
         if (ticker) ticker.add(tick);
         else frame = window.requestAnimationFrame(loop);
     }
@@ -947,16 +966,32 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
     readProgress();
     smoothProgress = progress;
     if (SHOT !== null) loadPhotos();
-    // start once the floor and the Blender room are in; if the room fails, keep the stills
+    // start once the floors and the Blender rooms are in, and every shader is compiled. Compiling
+    // up front and in parallel (compileAsync) matters: done by the first render it froze the page
+    // for ~4.5 s on an Intel UHD 630. If anything fails, the still images stay.
     Promise.all([
         load(IMG + 'hero/metallic.webp', [1, 1], (t) => { metallicMat.map = t; metallicMat.needsUpdate = true; }),
         loadRooms(),
     ]).then(() => {
+        performance.mark('hero3d:loaded');
+        // the floor mirror draws the scene into a render target, where three uses other shader
+        // variants (no tone mapping, linear output): compile those too, or the first frame
+        // compiles them and freezes the page (~1.7 s measured)
+        const screen = renderer.compileAsync(scene, camera);
+        renderer.setRenderTarget(mirror.getRenderTarget());
+        const reflected = renderer.compileAsync(scene, camera);
+        renderer.setRenderTarget(null);
+        return Promise.all([screen, reflected]);
+    }).then(() => {
+        performance.mark('hero3d:compiled');
+        textures.forEach((t) => renderer.initTexture(t));
+        hideLoader();
         ready = true;
         startTime = performance.now();
         if (heroVisible) play();
     }).catch((error) => {
-        console.warn('3D hero disabled (room A):', error);
+        console.warn('3D hero disabled:', error);
+        hideLoader();
         dispose();
     });
 }
