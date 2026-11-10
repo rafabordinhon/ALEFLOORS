@@ -125,11 +125,33 @@
     function initSmoothScroll() {
         if (reduceMotion || !window.Lenis || !window.gsap || !window.ScrollTrigger) return;
         window.gsap.registerPlugin(window.ScrollTrigger);
-        lenis = new window.Lenis({ lerp: 0.09, wheelMultiplier: 0.9, touchMultiplier: 1.2 });
+        // lerp only (no duration: with lerp it is ignored): every wheel turn eases at the same rate
+        lenis = new window.Lenis({ lerp: 0.08, wheelMultiplier: 1, smoothWheel: true, touchMultiplier: 1.2 });
         lenis.on('scroll', window.ScrollTrigger.update);
-        window.gsap.ticker.add((time) => lenis.raf(time * 1000));
+        window.gsap.ticker.add((time) => lenis.raf(time * 1000));   // the only place lenis.raf is called
         window.gsap.ticker.lagSmoothing(0);
         window.aleLenis = lenis;
+
+        // in-page links (#work, #faq...) used to rely on CSS scroll-behavior: smooth, which is off
+        // with Lenis: glide there with Lenis instead, keeping the header offset, then move focus.
+        // The "Skip to main content" link stays native (instant jump is what keyboard users expect).
+        document.addEventListener('click', (event) => {
+            const link = event.target.closest('a[href^="#"]');
+            if (!link || link.classList.contains('skip-link') || link.classList.contains('tour-skip')) return;
+            const id = decodeURIComponent(link.getAttribute('href').slice(1));
+            const target = id && document.getElementById(id);
+            if (!target) return;
+            event.preventDefault();
+            const offset = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+            lenis.scrollTo(target, {
+                offset: -offset,
+                onComplete: () => {
+                    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+                    target.focus({ preventScroll: true });
+                },
+            });
+            history.pushState(null, '', '#' + id);
+        });
     }
 
     // scroll to a page position: eased with Lenis, native otherwise
@@ -155,10 +177,7 @@
         const navItems = $$('.room-nav-item', hero);
         const ROOM_AT = [0, 0.24, 0.68];          // progress where each room starts
         const SCROLL_TO = [0, 0.5, 0.97];         // where the room-nav buttons take you
-        // the camera holds still at 0..0.1, 0.42..0.58 and 0.9..1 (js/hero-3d.js curveAt);
-        // stopping in between glides on to the next stop in the direction you were going
-        const HOLDS = [[0, 0.1], [0.42, 0.58], [0.9, 1]];
-        const STOPS = [0.05, 0.5, 0.96];
+        const STOPS = [0.05, 0.5, 0.96];          // where the "next room" arrow takes you (camera holds)
         let room = -1;
         let ticking = false;
 
@@ -244,27 +263,7 @@
         }
         window.addEventListener('resize', update);
 
-        // soft snap: when scrolling stops between two rooms, glide to the next room in that direction.
-        // Never fights the visitor: any new scroll input cancels it (Lenis), and it only acts inside the hero.
-        if (lenis) {
-            let lastDir = 1;
-            let idle = 0;
-            let snapping = false;
-            lenis.on('scroll', ({ direction }) => {
-                if (direction) lastDir = direction;
-                window.clearTimeout(idle);
-                if (snapping) return;
-                idle = window.setTimeout(() => {
-                    const p = progress();
-                    if (p <= 0.02 || p >= 0.98) return;
-                    if (HOLDS.some(([a, b]) => p >= a && p <= b)) return;
-                    const next = lastDir > 0 ? STOPS.find((s) => s > p) : [...STOPS].reverse().find((s) => s < p);
-                    if (next === undefined) return;
-                    snapping = true;
-                    scrollToY(topFor(next), () => { snapping = false; });
-                }, 220);
-            });
-        }
+        // no snap: the page stops exactly where the visitor stops (the rooms stay visible while scrolling)
 
         navItems.forEach((item, i) => {
             item.addEventListener('click', () => scrollToY(topFor(SCROLL_TO[i])));

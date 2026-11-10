@@ -435,18 +435,24 @@ html:not(.js) .tour-controls {
     }
 }
 
-/* Lenis smooth scrolling (recommended base styles) */
+/* Lenis smooth scrolling. base.css sets scroll-behavior: smooth on html; with Lenis running the two
+   fight (a jolt at the start of every wheel turn), so it is switched off whenever html has .lenis.
+   (html.lenis, not .lenis-smooth: this Lenis version doesn't add lenis-smooth.) */
 html.lenis,
 html.lenis body {
     height: auto;
 }
 
-.lenis.lenis-smooth {
+html.lenis {
     scroll-behavior: auto !important;
 }
 
 .lenis.lenis-stopped {
     overflow: hidden;
+}
+
+[data-lenis-prevent] {
+    overscroll-behavior: contain;
 }
 
 @media (min-width: 1024px) {

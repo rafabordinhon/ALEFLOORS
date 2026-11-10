@@ -1032,6 +1032,9 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader) {
             mat.map = t;
             mat.color.set(0xffffff);
             mat.needsUpdate = true;
+            // upload now, while the visitor is still reading the hero: otherwise it happens the
+            // first time the photo comes into view, mid-scroll, as a dropped frame
+            renderer.initTexture(t);
         }));
     }
 
