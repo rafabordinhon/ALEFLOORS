@@ -100,7 +100,8 @@ Blender: `scripts/house/{living,kitchen,outdoor}.py` mais o `lib.py` atual; `bak
   - Tiers por FPS, versão leve com imagens estáticas e parallax, reduced-motion.
   - Carga sob demanda por cômodo com barra de progresso, pausa fora da tela e dispose.
   - Textos em HTML; regenerar as imagens estáticas; medir e comparar com a linha de base; 1 teste de celular.
-- [ ] **FASE 7: prévia.** `netlify deploy` sem --prod, enviar o link e PARAR.
+- [x] **FASE 7: prévia.** https://6af290d9a70e146fe017eff7--alefloors.netlify.app (commit 10d3e16). Conferida com a CSP real: cena carrega, console limpo. Produção intacta. **Aguardando aprovação do Rafael.**
+- **Item original da FASE 7:** `netlify deploy` sem --prod, enviar o link e PARAR.
 
 ## Critérios de aceite (todas as fases)
 - Console sem erros.
