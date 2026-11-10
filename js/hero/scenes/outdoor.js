@@ -1,31 +1,70 @@
 // Pool area: deck, pool, water, caustics, waterline and the backlit logo.
 // Built in order by js/hero-3d.js; values shared between modules travel in ctx (see docs/PROJECT_MAP.md).
 export default function build(ctx) {
-    const { THREE, OLD, IMG, scene, materials, textures, mesh, box, load, canvasTexture, M, framed, flat, deckMat, floorPool, poolGeo } = ctx;
-    // ---------- room C: pool area ----------
-    // polished concrete deck around a sunken, glowing pool; stone coping; lounger; backlit logo
-    const pool = { x0: -11.3, x1: -6.3, z0: -11.6, z1: -8.8 };
-    // the deck's baked light map covers the whole room: uv1 = position in the room (x -13.5..-4.5,
-    // z from -4.5 at the bottom of the image to -13.5 at the top), same as scripts/bake_room.py
+    const { THREE, OLD, IMG, MODELS, scene, materials, textures, keep, mesh, box, load, canvasTexture, M, framed, flat, deckMat, deckFlakeMat, floorPool, poolGeo } = ctx;
+    // ---------- pool area ----------
+    // tour-casa: an open-air yard north of the kitchen (x -15..-1.5, z -17..-4.5) with a 7 x 3.6 m pool,
+    // a flake/polyaspartic deck, palms, a stone wall with the backlit logo, under a dusk sky.
+    // (?old: the indoor pool room, x -13.5..-4.5, z -13.5..-4.5)
+    const pool = OLD ? { x0: -11.3, x1: -6.3, z0: -11.6, z1: -8.8 } : { x0: -12, x1: -5, z0: -12.6, z1: -9 };
+    const yard = OLD ? { x0: -13.5, x1: -4.5, zS: -4.5, zN: -13.5 } : { x0: -15, x1: -1.5, zS: -4.5, zN: -17 };
+    // the deck's baked light map covers the whole yard: uv1 = position in it (z from yard.zS at the
+    // bottom of the image to yard.zN at the top), same as scripts/bake_room.py. uv = world xz / 9, so the
+    // flake grain has the same size as everywhere else (the flake texture repeats 5x per 9 m).
     const roomUV1 = (m, x0, x1, zS, zN) => {
         m.updateMatrixWorld();
         const pos = m.geometry.attributes.position;
         const uv1 = new Float32Array(pos.count * 2);
+        const uv = new Float32Array(pos.count * 2);
         const v = new THREE.Vector3();
         for (let i = 0; i < pos.count; i++) {
             v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
             uv1[i * 2] = (v.x - x0) / (x1 - x0);
             uv1[i * 2 + 1] = (zS - v.z) / (zS - zN);
+            uv[i * 2] = v.x / 9;
+            uv[i * 2 + 1] = -v.z / 9;
         }
         m.geometry.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2));
+        if (!OLD) m.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     };
+    const deck = OLD ? deckMat : deckFlakeMat;
+    const { x0: X0, x1: X1, zS: ZS, zN: ZN } = yard;
     [
-        flat(9, 1.9, deckMat, -9, -12.55),                                    // north strip
-        flat(9, 4.3, deckMat, -9, -6.65),                                     // south strip
-        flat(pool.x0 + 13.5, 2.8, deckMat, (pool.x0 - 13.5) / 2, -10.2),      // west strip
-        flat(-4.5 - pool.x1, 2.8, deckMat, (pool.x1 - 4.5) / 2, -10.2),       // east strip
-    ].forEach((m) => roomUV1(m, -13.5, -4.5, -4.5, -13.5));
-    load(IMG + 'hero/polished.webp', [3, 3], (t) => { deckMat.map = t; deckMat.needsUpdate = true; });
+        flat(X1 - X0, pool.z0 - ZN, deck, (X0 + X1) / 2, (pool.z0 + ZN) / 2),                       // north strip
+        flat(X1 - X0, ZS - pool.z1, deck, (X0 + X1) / 2, (ZS + pool.z1) / 2),                       // south strip
+        flat(pool.x0 - X0, pool.z1 - pool.z0, deck, (pool.x0 + X0) / 2, (pool.z0 + pool.z1) / 2),   // west strip
+        flat(X1 - pool.x1, pool.z1 - pool.z0, deck, (X1 + pool.x1) / 2, (pool.z0 + pool.z1) / 2),   // east strip
+    ].forEach((m) => roomUV1(m, X0, X1, ZS, ZN));
+    if (OLD) load(IMG + 'hero/polished.webp', [3, 3], (t) => { deckMat.map = t; deckMat.needsUpdate = true; });
+    const outdoorFloor = OLD ? null : ctx.addFloorFx(deckFlakeMat, { x0: X0, x1: X1 });
+    if (outdoorFloor) outdoorFloor.reveal = 0;             // raw concrete until the visitor steps outside
+
+    // dusk sky (a dome with a painted panorama) and the lawn around the yard
+    if (!OLD) {
+        const skyMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide, toneMapped: false, depthWrite: false });
+        load(MODELS + 'sky.webp', [1, 1], (t) => { t.wrapS = THREE.RepeatWrapping; skyMat.map = t; skyMat.needsUpdate = true; });
+        const sky = mesh(new THREE.SphereGeometry(70, 48, 24), skyMat, -6, 0, -6);
+        sky.rotation.y = 1.19;                               // puts the setting sun to the west-northwest
+        sky.renderOrder = -1;
+        const lawnMap = canvasTexture(128, 128, (c) => {
+            const img = c.createImageData(128, 128);
+            for (let i = 0; i < img.data.length; i += 4) {
+                const n = Math.random();
+                img.data[i] = 52 + n * 22; img.data[i + 1] = 68 + n * 26; img.data[i + 2] = 40 + n * 14; img.data[i + 3] = 255;
+            }
+            c.putImageData(img, 0, 0);
+        });
+        lawnMap.wrapS = lawnMap.wrapT = THREE.RepeatWrapping;
+        lawnMap.repeat.set(40, 40);
+        // four strips around the yard (a single big plane would cut through the pool, right under the water)
+        const lawnMat = new THREE.MeshStandardMaterial({ map: lawnMap, roughness: 1 });
+        materials.push(lawnMat);
+        const F = 60;                                        // how far the lawn reaches
+        flat(X1 - X0, F, lawnMat, (X0 + X1) / 2, ZN - F / 2, -0.03);                  // north
+        flat(X1 - X0, F, lawnMat, (X0 + X1) / 2, ZS + F / 2, -0.03);                  // south (under the house)
+        flat(F, ZS - ZN + 2 * F, lawnMat, X0 - F / 2, (ZS + ZN) / 2, -0.03);          // west
+        flat(F, ZS - ZN + 2 * F, lawnMat, X1 + F / 2, (ZS + ZN) / 2, -0.03);          // east
+    }
     const pw = pool.x1 - pool.x0;
     const pd = pool.z1 - pool.z0;
     const pcx = (pool.x0 + pool.x1) / 2;
@@ -115,8 +154,8 @@ export default function build(ctx) {
         const loungerBack = box(0.7, 0.06, 0.8, M.fabricLight, -11.6, 0.55, -7.15);
         loungerBack.rotation.x = 0.7;
     }
-    framed(IMG + '2-service/homeServices/pool-600.webp', 'z', -4.5, -7.6, -1, 1.9, 1.42, OLD);
-    framed(IMG + '1-home/generalServices/polyAsparticPoolDeck.webp', 'z', -4.5, -11.4, -1, 1.8, 1.15, OLD);
+    if (OLD) framed(IMG + '2-service/homeServices/pool-600.webp', 'z', -4.5, -7.6, -1, 1.9, 1.42);   // no wall outdoors
+    if (OLD) framed(IMG + '1-home/generalServices/polyAsparticPoolDeck.webp', 'z', -4.5, -11.4, -1, 1.8, 1.15);
     // waterline: a band of dark mosaic along the top of the pool walls; the water sits in its middle
     const mosaic = canvasTexture(256, 32, (c) => {
         for (let x = 0; x < 256; x += 8) {
@@ -164,9 +203,10 @@ export default function build(ctx) {
     materials.push(haloMat);
     const halo = new THREE.Mesh(poolGeo, haloMat);
     halo.scale.set(2.2, 0.9, 1);
-    halo.position.set(-9, 2.45, -13.38);
+    // ?old: on the room's north wall; tour-casa: on the stone wall behind the pool (z -15.2, 0.3 thick)
+    if (OLD) halo.position.set(-9, 2.45, -13.38); else halo.position.set((pool.x0 + pool.x1) / 2, 1.55, -15.04);
     scene.add(halo);
-    mesh(new THREE.PlaneGeometry(3.4, 0.85), new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true, depthWrite: false }), -9, 2.45, -13.37);
+    mesh(new THREE.PlaneGeometry(3.4, 0.85), new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true, depthWrite: false }), OLD ? -9 : (pool.x0 + pool.x1) / 2, OLD ? 2.45 : 1.55, OLD ? -13.37 : -15.03);
 
-    Object.assign(ctx, { causticLayers, rippleNormal });
+    Object.assign(ctx, { causticLayers, rippleNormal, outdoorFloor });
 }

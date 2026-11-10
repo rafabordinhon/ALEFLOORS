@@ -67,7 +67,14 @@ Blender: `scripts/house/{living,kitchen,outdoor}.py` mais o `lib.py` atual; `bak
 - **Itens originais da FASE 3:**
   - Itens: ilha com banquetas e pendentes, armários, bancada, backsplash, eletrodomésticos simples, cesta, vasos, tábua.
   - Piso de concreto polido + momento do piso.
-- [ ] **FASE 4: ÁREA EXTERNA.**
+- [x] **FASE 4: ÁREA EXTERNA.** Feito:
+  - Piscina externa: sem paredes nem teto, quintal x -15..-1.5, z -17..-4.5, piscina 7 x 3,6 m (`house_outdoor.py`). Borda, escada de inox com flanges e degraus, luzes na água, muro de pedra iluminado com o logo, mureta, cerca viva, 8 palmeiras, pergolado com 2 espreguiçadeiras e mesinha, guarda-sol, vasos e balizadores.
+  - Luz: sol baixo a oeste + cúpula de céu emissiva (`NB_`). No site, cúpula com `sky.webp` (23 KB) e gramado em 4 faixas.
+  - Deck de flake opaco (`deckFlakeMat`) com UV do mundo, revelação na chegada e momento do piso. Cartão "Polyaspartic Pool Deck" com as amostras de flake (trocar a cor funciona).
+  - Corrigido: água verde (o gramado passava dentro da piscina); foto e moldura FS7 flutuando (a parede oeste da sala virou a abertura da cozinha).
+  - Medido: 3.959 / 2.957 KB; 56–60 FPS; console limpo.
+  - **Pendência (fase 6):** as palmeiras ficaram ralas (folhas finas parecem galhos secos). Engrossar e encher a coroa e assar a "c" de novo.
+- **Itens originais da FASE 4:**
   - Céu de entardecer (skybox), deck flake/polyaspartic, piscina externa com borda.
   - Escada de inox na escala e fixada (reaproveitar a curva atual), espreguiçadeiras, guarda-sol, palmeiras, luzes de jardim e da água, pergolado ou cozinha externa se couber.
   - Momento do piso + chips de cor do flake.

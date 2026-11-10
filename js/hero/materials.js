@@ -80,8 +80,14 @@ export default function build(ctx) {
     }
     paintFlake('Outback');
     flakeMat.map = flakeTexture;
+    // outdoor deck (tour-casa): the same live flake (the color chips repaint it), opaque (no mirror
+    // outside), with a polyaspartic gloss; its strips get world-scaled UVs in scenes/outdoor.js
+    const deckFlakeMat = floorMat(1, 0.38);
+    deckFlakeMat.clearcoat = 0.7;
+    deckFlakeMat.clearcoatRoughness = 0.15;
+    deckFlakeMat.map = flakeTexture;
     const onFlake = (event) => paintFlake(event.detail);
     window.addEventListener('ale:flake', onFlake);
 
-    Object.assign(ctx, { flat, metallicMat, flakeMat, deckMat, concreteMat, reflectorSize, mirror, onFlake });
+    Object.assign(ctx, { flat, metallicMat, flakeMat, deckMat, concreteMat, deckFlakeMat, reflectorSize, mirror, onFlake });
 }

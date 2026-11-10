@@ -115,19 +115,12 @@ export default function build(ctx) {
     load(IMG + 'hero/concrete.webp', [1.4, 1], (t) => { sampleMats[0].map = t; sampleMats[0].color.set(0xffffff); sampleMats[0].needsUpdate = true; });
     framed(IMG + '1-home/finishedServices/FS5.webp', 'z', 4.5, 0.6, -1, 1.5, 1.1, OLD);
     framed(IMG + '1-home/finishedServices/FS8.webp', 'z', 4.5, 3.6, -1, 1.5, 1.1, OLD);
-    framed(IMG + '1-home/finishedServices/FS7.webp', 'z', -4.5, 3.8, 1, 1.3, 1.1, OLD);
+    // the west wall this photo hung on became the opening to the kitchen (tour-casa)
+    if (OLD) framed(IMG + '1-home/finishedServices/FS7.webp', 'z', -4.5, 3.8, 1, 1.3, 1.1);
 
-    // living room (v3): the view through the glass wall, the glass itself and the fireplace's flames
+    // living room: the glass wall (the real yard is behind it, scenes/outdoor.js) and the fireplace's flames
     let flame = null;
     if (!OLD) {
-        const viewMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
-        materials.push(viewMat);
-        load(MODELS + 'view-sunset.webp', [1, 1], (t) => {
-            t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-            viewMat.map = t;
-            viewMat.needsUpdate = true;
-        });
-        mesh(new THREE.PlaneGeometry(11, 5.5), viewMat, 3, 1.25, -8);
         const glass = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.04, metalness: 1, transparent: true, opacity: 0.08, depthWrite: false, envMapIntensity: 1.6 });
         mesh(new THREE.PlaneGeometry(3.0, 3.07), glass, 2.95, 1.685, -4.47);
         const flameTex = canvasTexture(256, 64, (c) => {

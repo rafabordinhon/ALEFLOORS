@@ -70,8 +70,9 @@ if (canUse3D()) {
 function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
     const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, FLOOR_LIGHT_GAIN, FLAKES };
     modules.forEach((build) => build(ctx));
-    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, floorCards, updateFloorFx } = ctx;
+    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, outdoorFloor, floorCards, updateFloorFx } = ctx;
     let kitchenRevealAt = null;
+    let outdoorRevealAt = null;
     let { pixelRatio, explode, sampleSpin, idle } = ctx;      // changed by the loop below (pixelRatio is mirrored back to ctx)
     // ---------- state + loop ----------
     const pointer = { x: 0, y: 0 };
@@ -175,7 +176,8 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         // before the camera leaves for the next room
         // one "moment" per room, inside the camera's hold there (curveAt): [living, kitchen, outdoor]
         const moment = (a, b) => smooth(clamp01((smoothProgress - a) / 0.05)) * (1 - smooth(clamp01((smoothProgress - b) / 0.05)));
-        const moments = SHOT !== null ? [0, 0, 0] : [moment(0.015, 0.12), moment(0.4, 0.55), 0];
+        // (outdoor: from 0.86 to the end of the tour, so it never eases out)
+        const moments = SHOT !== null ? [0, 0, 0] : [moment(0.015, 0.12), moment(0.4, 0.55), moment(0.86, 2)];
         const floorMoment = Math.max(...moments);
         if (livingFloor) {
             // the opening reveals the finished floor over raw concrete, while the camera glides in
@@ -189,6 +191,13 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
             kitchenFloor.reveal = SHOT !== null ? 1 : kitchenRevealAt === null ? 0 : smooth(clamp01((t - kitchenRevealAt) / 1.8));
             kitchenFloor.sweep = clamp01((smoothProgress - 0.41) / 0.13);
             kitchenFloor.sweepAmt = moments[1];
+        }
+        if (outdoorFloor) {
+            // same on the pool deck: the finish rolls in the first time the visitor steps outside
+            if (outdoorRevealAt === null && (moments[2] > 0.2 || SHOT === 2)) outdoorRevealAt = t;
+            outdoorFloor.reveal = SHOT !== null ? 1 : outdoorRevealAt === null ? 0 : smooth(clamp01((t - outdoorRevealAt) / 2.2));
+            outdoorFloor.sweep = clamp01((smoothProgress - 0.87) / 0.12);
+            outdoorFloor.sweepAmt = moments[2];
         }
         updateFloorFx();
         // idle: when the visitor stops scrolling, the camera breathes a little more (decorative, very small)

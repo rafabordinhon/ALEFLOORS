@@ -50,7 +50,8 @@ Leia isto e o docs/PLAN.md no início de cada fase. Não re-explore o projeto.
 ## Coordenadas atuais (Three, Y para cima)
 - Sala A: x -4.5..4.5, z -4.5..7 (janela ao norte em x 1.4..4.5).
 - Garagem B: x -13.5..-4.5, z -4.5..4.5.
-- Piscina C: x -13.5..-4.5, z -13.5..-4.5 (**interna**: a fase 4 refaz como externa).
+- Área externa C (fase 4): quintal x -15..-1.5, z -17..-4.5, a céu aberto, ao norte da cozinha (a porta da cozinha fica em z -4.5, x -9). Piscina x -12..-5, z -12.6..-9. Muro de pedra em z -15.2 (logo em z -15.03). `scenes/outdoor.js`: `pool`/`yard` (com `?old` a sala de piscina interna), cúpula do céu (r 70, câmera com far 120), gramado em 4 faixas, `ctx.outdoorFloor` (floorFx no `deckFlakeMat`, criado em materials.js).
+- Blender: `scripts/house_outdoor.py` (+ `make_sky.py`). Objetos `NB_` (cúpula de céu, gramado) iluminam o bake mas não entram nele.
 - Teto H=3.6. Portas de 3.4 x 3.
 
 ## Medir e testar

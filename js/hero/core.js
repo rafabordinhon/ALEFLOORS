@@ -23,7 +23,7 @@ export default function build(ctx) {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x17130f);
-    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 60);
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 120);   // far enough for the outdoor sky dome
     const pmrem = new THREE.PMREMGenerator(renderer);
     const roomEnv = new RoomEnvironment();
     const envMap = pmrem.fromScene(roomEnv, 0.04).texture;
