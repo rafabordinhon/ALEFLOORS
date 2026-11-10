@@ -78,7 +78,14 @@ Blender: `scripts/house/{living,kitchen,outdoor}.py` mais o `lib.py` atual; `bak
   - Céu de entardecer (skybox), deck flake/polyaspartic, piscina externa com borda.
   - Escada de inox na escala e fixada (reaproveitar a curva atual), espreguiçadeiras, guarda-sol, palmeiras, luzes de jardim e da água, pergolado ou cozinha externa se couber.
   - Momento do piso + chips de cor do flake.
-- [ ] **FASE 5: O TOUR.**
+- [x] **FASE 5: O TOUR.** Feito:
+  - Curva nova (`cameraPath.js`): sala → cozinha contornando a ilha → porta → deck, com folgas conferidas.
+  - Porta de vidro de correr ao vivo (`kitchen.js`, `ctx.setDoorOpen`): abre em p 0.58..0.70; a câmera cruza em ~0.73.
+  - Luz: a hemisfera e o fundo vão do interior quente ao entardecer em p 0.62..0.88.
+  - As etapas acendem certo (sala 0, cozinha a partir de 0.24, deck a partir de 0.68). Lenis, skip, teclado e etapas clicáveis já vinham da v3.
+  - Medido: 3.962 / 2.961 KB; desktop 56 FPS; console limpo.
+  - **Para a fase 6:** o celular emulado teve 1 quadro de 383 ms na rolagem. Hipótese: texturas da área externa (céu, gramado) chegam depois do `compileAsync` e só vão para a GPU na primeira vez que aparecem. Investigar com as marcas antes de corrigir.
+- **Itens originais da FASE 5:**
   - Uma curva contínua sala → cozinha → porta de vidro que abre sozinha (pelo progresso) → externa.
   - Luz mudando aos poucos de interior quente para entardecer; transições suaves.
   - Lenis + ScrollTrigger (já prontos), "Skip the tour", teclado, etapas clicáveis (Living room, Kitchen, Pool deck).

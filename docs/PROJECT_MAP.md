@@ -39,6 +39,12 @@ Leia isto e o docs/PLAN.md no início de cada fase. Não re-explore o projeto.
 - `js/vendor/`: three.module.min.js 0.170.0, GLTFLoader, BufferGeometryUtils, Reflector, RoomEnvironment, gsap 3.12.5, ScrollTrigger, lenis 1.1.13.
 - `assets/3d/`: GLBs quantizados (KHR_mesh_quantization) + .gz, atlas `*-atlas(-m).webp`, `*-floor-light(-m).webp`, `floor-metallic*.webp`, `view-sunset.webp`.
 
+## Tour (fase 5)
+- Curva em `cameraPath.js` (pontos 0, 3 e 6 = sala, cozinha, deck; `curveAt` pausa em 0..0.1, 0.42..0.58 e 0.9..1).
+- Porta de correr: `kitchen.js` (`ctx.setDoorOpen(k)`), que o loop abre em p 0.58..0.70.
+- Luz interior → entardecer: `ctx.hemi` + `scene.background`, misturados no loop em p 0.62..0.88.
+- Etapas: Living room / Kitchen / Pool deck (`ROOM_AT=[0,.24,.68]` no home.js e `roomAt` iguais).
+
 ## Pipeline do Blender (fora do repo)
 `C:\Users\rafael.bordinhon\ALEFLOORS-blender\scripts\`:
 - `build_all.py`: monta a cena e salva `blend/03-v2-cena.blend`;

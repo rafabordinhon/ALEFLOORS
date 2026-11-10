@@ -4,7 +4,8 @@ export default function build(ctx) {
     const { THREE, OLD, mobile, H, scene, keep, canvasTexture, M } = ctx;
     // ---------- light: soft fill, one warm light per room, downlights with beams ----------
     // v2: the rooms' light is baked; the hemisphere only lifts the live floors and objects a little
-    scene.add(new THREE.HemisphereLight(0xffe7cc, 0x2a2018, OLD ? 0.45 : 0.3));
+    const hemi = new THREE.HemisphereLight(0xffe7cc, 0x2a2018, OLD ? 0.45 : 0.3);   // the loop shifts it to dusk outdoors
+    scene.add(hemi);
     if (OLD) [[0, 0.5], [-9, 0], [-9, -9]].forEach(([x, z]) => {
         const light = new THREE.PointLight(0xffcf96, 28, 11, 2);
         light.position.set(x, H - 1.1, z);
@@ -75,5 +76,5 @@ export default function build(ctx) {
     const dust = new THREE.Points(dustGeo, dustMat);
     scene.add(dust);
 
-    Object.assign(ctx, { floorPool, poolGeo, dust });
+    Object.assign(ctx, { floorPool, poolGeo, dust, hemi });
 }

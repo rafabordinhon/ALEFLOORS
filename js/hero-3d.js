@@ -70,7 +70,12 @@ if (canUse3D()) {
 function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
     const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, FLOOR_LIGHT_GAIN, FLAKES };
     modules.forEach((build) => build(ctx));
-    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, outdoorFloor, floorCards, updateFloorFx } = ctx;
+    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, outdoorFloor, floorCards, updateFloorFx, hemi, setDoorOpen } = ctx;
+    // interior warm -> outdoor dusk (hemisphere light and background), see the loop
+    const HEMI_IN = [new THREE.Color(0xffe7cc), new THREE.Color(0x2a2018)];
+    const HEMI_OUT = [new THREE.Color(0xb9a9d8), new THREE.Color(0x3a3024)];
+    const BG_IN = new THREE.Color(0x17130f);
+    const BG_OUT = new THREE.Color(0x2a2340);
     let kitchenRevealAt = null;
     let outdoorRevealAt = null;
     let { pixelRatio, explode, sampleSpin, idle } = ctx;      // changed by the loop below (pixelRatio is mirrored back to ctx)
@@ -200,6 +205,17 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
             outdoorFloor.sweepAmt = moments[2];
         }
         updateFloorFx();
+        // the sliding door opens as the camera nears it; the light turns from warm interior to dusk
+        const toShot = (v) => (SHOT === null ? v : SHOT === 2 ? 1 : 0);
+        // (fully open by p 0.70; the camera crosses the doorway at about p 0.73)
+        if (setDoorOpen) setDoorOpen(toShot(smooth(clamp01((smoothProgress - 0.58) / 0.12))));
+        if (!OLD) {
+            const outside = toShot(smooth(clamp01((smoothProgress - 0.62) / 0.26)));
+            hemi.color.copy(HEMI_IN[0]).lerp(HEMI_OUT[0], outside);
+            hemi.groundColor.copy(HEMI_IN[1]).lerp(HEMI_OUT[1], outside);
+            hemi.intensity = 0.3 + 0.25 * outside;
+            scene.background.copy(BG_IN).lerp(BG_OUT, outside);
+        }
         // idle: when the visitor stops scrolling, the camera breathes a little more (decorative, very small)
         idle = damp(idle, Math.abs(progress - smoothProgress) < 0.002 ? 1 : 0, 1.5, dt);
         const still = SHOT !== null ? 0 : 1;
