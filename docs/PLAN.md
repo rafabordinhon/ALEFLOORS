@@ -89,7 +89,14 @@ Blender: `scripts/house/{living,kitchen,outdoor}.py` mais o `lib.py` atual; `bak
   - Uma curva contínua sala → cozinha → porta de vidro que abre sozinha (pelo progresso) → externa.
   - Luz mudando aos poucos de interior quente para entardecer; transições suaves.
   - Lenis + ScrollTrigger (já prontos), "Skip the tour", teclado, etapas clicáveis (Living room, Kitchen, Pool deck).
-- [ ] **FASE 6: desempenho e mobile.**
+- [x] **FASE 6: desempenho e mobile.** Feito:
+  - Travamento investigado. A hipótese das texturas estava errada (elas chegam antes do `compileAsync`). Os quadros longos (67–100 ms) vinham do `backdrop-filter` + `filter: blur` na troca de cartões e textos. Em telas < 1024 px agora só há fade, com vidro fosco de 8 px: **0 quadros > 60 ms no passeio inteiro**.
+  - Sala mais leve (anéis 44×6, chanfros com 3 segmentos): 452 → 364 KB. Palmeiras com coroa cheia (18 folhas largas): externa 416 → 477 KB.
+  - Versão leve (sem 3D): parallax simples nas imagens estáticas (`--pp`), desligado com reduced-motion. Imagens estáticas regeneradas com a casa nova.
+  - Já existiam e foram conferidos: tiers por FPS, pausa fora da tela, `dispose`, barra de progresso, textos em HTML.
+  - **Carga sob demanda por cômodo: não fiz.** Carregar a externa no meio do passeio recompila shaders na hora e trava; os 3 cômodos carregam juntos por trás da barra de progresso.
+  - Medido contra a linha de base: desktop 4.254 → 3.925 KB, celular 3.176 → 2.942 KB; primeiro quadro 3,2 → 3,1 s e 2,7 → 2,7 s; FPS no desktop 57–60 → 56–57 (UHD 630), no celular 59–60 → 60 (pior quadro 50 → 33 ms). Console limpo.
+- **Itens originais da FASE 6:**
   - Tiers por FPS, versão leve com imagens estáticas e parallax, reduced-motion.
   - Carga sob demanda por cômodo com barra de progresso, pausa fora da tela e dispose.
   - Textos em HTML; regenerar as imagens estáticas; medir e comparar com a linha de base; 1 teste de celular.

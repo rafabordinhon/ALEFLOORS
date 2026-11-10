@@ -251,6 +251,8 @@
             hero.classList.toggle('is-last-room', p >= 0.9);
             if (p > 0.12) loadStill(1);       // a little ahead, so the image is ready
             if (p > 0.55) loadStill(2);
+            // light version (no 3D): the room's still image drifts a little with the scroll (css/home.css)
+            if (!reduceMotion) hero.style.setProperty('--pp', fill.toFixed(3));
         };
 
         // with Lenis, ScrollTrigger reports the hero's progress; without it, plain scroll events

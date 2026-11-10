@@ -56,6 +56,15 @@
     opacity: 1;
 }
 
+/* light version (no 3D): a simple parallax, the active still drifts up as you scroll its room
+   (js/home.js sets --pp 0..1); never with reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+    html:not(.has-3d) .hero-still img {
+        transform: translate3d(0, calc(var(--pp, 0) * -28px), 0) scale(1.06);
+        will-change: transform;
+    }
+}
+
 .hero-canvas {
     opacity: 0;
     transition: opacity 900ms var(--ease-out);
@@ -309,6 +318,24 @@ html:not(.js) .room-nav {
 
 html:not(.has-3d) .floor-card {
     display: none;
+}
+
+/* phones and tablets: animated blur and big backdrop blurs cost dropped frames when the cards and
+   captions change (measured: 67-100 ms frames at those moments), so fade only and blur less */
+@media (max-width: 1023px) {
+    .js .room-panel,
+    .js .room-panel:not(.is-active),
+    .floor-card,
+    .floor-card.is-on {
+        filter: none;
+    }
+
+    .room-caption,
+    .floor-card {
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        background: rgba(28, 23, 19, 0.7);
+    }
 }
 
 /* while a floor card is showing, the room caption (same corner) steps aside */
