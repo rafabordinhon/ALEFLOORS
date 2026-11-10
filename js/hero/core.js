@@ -1,7 +1,7 @@
 // Renderer, scene, camera, environment, bookkeeping for dispose(), mesh helpers and base materials.
 // Built in order by js/hero-3d.js; values shared between modules travel in ctx (see docs/PROJECT_MAP.md).
 export default function build(ctx) {
-    const { THREE, RoomEnvironment, canvas } = ctx;
+    const { THREE, RoomEnvironment, canvas, ASSET_V } = ctx;
     performance.mark('hero3d:start');   // marks: idle -> start -> loaded -> first-frame (see DevTools > Performance)
     const mobile = window.innerWidth < 768;
     const IMG = 'assets/images/';
@@ -48,7 +48,7 @@ export default function build(ctx) {
     const loader = new THREE.TextureLoader();
     const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     const load = (url, repeat, onReady) => new Promise((resolve) => {
-        const t = loader.load(url, () => { if (onReady) onReady(t); resolve(t); }, undefined, () => resolve(t));
+        const t = loader.load(url + ASSET_V, () => { if (onReady) onReady(t); resolve(t); }, undefined, () => resolve(t));
         t.colorSpace = THREE.SRGBColorSpace;
         t.wrapS = t.wrapT = THREE.RepeatWrapping;
         t.repeat.set(repeat[0], repeat[1]);

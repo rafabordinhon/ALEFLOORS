@@ -511,7 +511,7 @@ def write_support_files(pages: list) -> None:
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
 
 /assets/*
-  Cache-Control: public, max-age=2592000
+  Cache-Control: public, max-age=0, must-revalidate
 
 /favicon.ico
   Cache-Control: public, max-age=2592000

@@ -1,7 +1,7 @@
 // Assets: loads the baked rooms (gzipped GLB + atlas + floor light map) with a progress bar.
 // Built in order by js/hero-3d.js; values shared between modules travel in ctx (see docs/PROJECT_MAP.md).
 export default function build(ctx) {
-    const { THREE, GLTFLoader, hero, OLD, MODELS, FLOOR_LIGHT_GAIN, mobile, scene, geometries, materials, textures, anisotropy, metallicMat, flakeMat, deckMat, concreteMat, deckFlakeMat } = ctx;
+    const { THREE, GLTFLoader, hero, OLD, MODELS, ASSET_V, FLOOR_LIGHT_GAIN, mobile, scene, geometries, materials, textures, anisotropy, metallicMat, flakeMat, deckMat, concreteMat, deckFlakeMat } = ctx;
     // ---------- the three rooms from Blender: one mesh each, colors and light baked into one texture ----------
     // The textures already have Blender's look (AgX tone mapping), so they skip three's tone mapping;
     // render() fades their color with the intro exposure instead. Progress shows in .hero-loader.
@@ -20,7 +20,7 @@ export default function build(ctx) {
         const texLoader = new THREE.TextureLoader(manager);
         const gltfLoader = new GLTFLoader(manager);
         const tex = (url, flipY) => new Promise((resolve, reject) => {
-            const t = texLoader.load(url, () => resolve(t), undefined, reject);
+            const t = texLoader.load(url + ASSET_V, () => resolve(t), undefined, reject);
             t.flipY = flipY;                 // glTF UVs expect flipY = false
             t.colorSpace = THREE.SRGBColorSpace;
             t.anisotropy = anisotropy;
@@ -32,9 +32,9 @@ export default function build(ctx) {
         // the models come gzipped (less than half the bytes; the host doesn't compress .glb) and are
         // unpacked here; browsers without DecompressionStream load the plain .glb
         const model = (url) => {
-            if (!('DecompressionStream' in window)) return gltfLoader.loadAsync(url);
+            if (!('DecompressionStream' in window)) return gltfLoader.loadAsync(url + ASSET_V);
             manager.itemStart(url);
-            return fetch(url + '.gz')
+            return fetch(url + '.gz' + ASSET_V)
                 .then((res) => {
                     if (!res.ok) throw new Error(res.status + ' ' + url);
                     return new Response(res.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();

@@ -23,6 +23,9 @@ const SHOT = params.has('shot') ? Math.min(2, Math.max(0, parseInt(params.get('s
 const OLD = params.has('old') || params.has('oldA');
 const FORCED_TIER = ['low', 'mid', 'high'].includes(params.get('tier')) ? params.get('tier') : null;
 const MODELS = 'assets/3d/';
+// Added to every 3D model/texture URL. Change it whenever files in assets/ are replaced under the same
+// name, so browsers that cached the old ones fetch the new ones (assets/ is also revalidated on each visit).
+const ASSET_V = '?v=20261110';
 const FLOOR_LIGHT_GAIN = 4;      // floor light maps are stored at 1/4 so bright spots don't clip
 
 // real colors of six flake blends (from the catalog swatches): [color, share]
@@ -68,7 +71,7 @@ if (canUse3D()) {
 }
 
 function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
-    const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, FLOOR_LIGHT_GAIN, FLAKES };
+    const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, ASSET_V, FLOOR_LIGHT_GAIN, FLAKES };
     modules.forEach((build) => build(ctx));
     const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, outdoorFloor, floorCards, updateFloorFx, hemi, setDoorOpen } = ctx;
     // interior warm -> outdoor dusk (hemisphere light and background), see the loop
