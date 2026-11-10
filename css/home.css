@@ -259,6 +259,67 @@ html:not(.js) .room-nav {
     display: none;
 }
 
+/* floor card: the room's floor, its benefits and a quote button, during the "floor moment"
+   (phones: top, under the tour controls; desktop: right side) */
+.floor-card {
+    position: absolute;
+    top: calc(var(--header-h) + 64px);
+    left: var(--gutter);
+    right: var(--gutter);
+    max-width: 22rem;
+    margin-left: auto;
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-lg);
+    background: rgba(28, 23, 19, 0.55);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(16px) saturate(1.2);
+    color: var(--on-dark);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    filter: blur(4px);
+    /* exit: quick */
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), filter 180ms var(--ease-out), visibility 0s linear 180ms;
+}
+
+.floor-card.is-on {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    filter: none;
+    /* enter: a little slower */
+    transition: opacity 320ms var(--ease-out), transform 320ms var(--ease-out), filter 320ms var(--ease-out), visibility 0s;
+}
+
+.floor-card-name {
+    font-family: var(--font-serif);
+    font-size: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);
+    font-style: italic;
+    line-height: 1.05;
+}
+
+.floor-card-list {
+    margin: 10px 0 16px;
+    padding-left: 1.1em;
+    color: #d6d0c8;
+    font-size: var(--fs-small);
+    line-height: 1.5;
+}
+
+html:not(.has-3d) .floor-card {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .floor-card {
+        top: auto;
+        left: auto;
+        right: max(var(--gutter), calc((100vw - var(--container-wide)) / 2));
+        bottom: 104px;
+    }
+}
+
 /* layer labels of the floor sample (only drawn with the 3D scene, pinned by js/hero-3d.js) */
 .layer-labels {
     position: absolute;

@@ -149,5 +149,27 @@ export default function build(ctx) {
         mesh(new THREE.PlaneGeometry(1.4, 0.34), flame, 0.15, 0.6, -4.16);
     }
 
-    Object.assign(ctx, { sample, spot, sampleLayers, layerLabels, layerPoint, explode, sampleSpin, idle, flame });
+    // ---------- tour-casa, phase 2 ----------
+    // the living room's floor: metallic epoxy, with the reveal curtain and the light sweep
+    const livingFloor = OLD ? null : ctx.addFloorFx(ctx.metallicMat, { x0: -4.5, x1: 4.5 });
+    if (livingFloor) livingFloor.reveal = 0;          // starts as raw concrete; the opening reveals it
+    // sheer curtains at both sides of the glass wall, lit from behind by the sunset
+    if (!OLD) {
+        const sheerGeo = new THREE.PlaneGeometry(0.75, 3.0, 24, 1);
+        const pos = sheerGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) pos.setZ(i, 0.05 * Math.sin(pos.getX(i) * 26));   // soft folds
+        sheerGeo.computeVertexNormals();
+        const sheer = new THREE.MeshStandardMaterial({
+            color: 0xf3ece2, emissive: 0xffb27a, emissiveIntensity: 0.22, roughness: 1,
+            transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false,
+        });
+        keep(sheerGeo, sheer);
+        [1.85, 4.07].forEach((x) => {
+            const s = new THREE.Mesh(sheerGeo, sheer);
+            s.position.set(x, 1.62, -4.28);
+            scene.add(s);
+        });
+    }
+    const floorCards = Array.from(hero.querySelectorAll('.floor-card'));
+    Object.assign(ctx, { sample, spot, sampleLayers, layerLabels, layerPoint, explode, sampleSpin, idle, flame, livingFloor, floorCards });
 }

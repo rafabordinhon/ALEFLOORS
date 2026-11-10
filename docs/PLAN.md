@@ -51,7 +51,12 @@ Blender: `scripts/house/{living,kitchen,outdoor}.py` mais o `lib.py` atual; `bak
     - Externa: deck, borda da piscina, escada de inox, espreguiçadeiras, guarda-sol, palmeiras (tronco em curva com folhas), arbustos, luzes de jardim, pergolado.
     - Ao vivo no Three: água, chamas, amostra explodida, porta de correr, céu.
   - **Lista de .glb de terceiros: nenhum.** Proposta aguardando aprovação do Rafael: tudo procedural. Motivos: os .glb livres realistas que existem passam muito de ~300 KB (Poly Haven) ou são low-poly estilizados (Kenney, Quaternius); a pesquisa do carro já mostrou isso.
-- [ ] **FASE 2: SALA.**
+- [x] **FASE 2: SALA.** Feito:
+  - Sofá modular em L, 2 poltronas de bouclé, luminária de anéis, LED nas prateleiras, quadro e planta (`house_living.py`). Cortinas translúcidas ao vivo.
+  - `floorFx` (revelação concreto → acabado na abertura e faixa de luz no momento do piso) e cartão de piso em HTML.
+  - Medido: 4.500 / 3.381 KB; 56–60 FPS; console limpo.
+  - Pendências: room-a.glb.gz subiu para 456 KB (36,5 mil triângulos), a reduzir na fase 6 (anéis e chanfros). O metálico não tem amostras de cor no site, então o cartão não tem chips.
+- **Itens originais da FASE 2:**
   - Itens: painel de pedra com prateleiras iluminadas e lareira linear, ripado, luminária de anéis, cove, cortinas translúcidas, quadros, plantas, sofá modular, poltronas, tapete, mesa de centro com objetos, parede de vidro com pôr do sol.
   - Piso metálico + momento do piso.
 - [ ] **FASE 3: COZINHA.**

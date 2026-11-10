@@ -70,7 +70,7 @@ if (canUse3D()) {
 function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
     const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, FLOOR_LIGHT_GAIN, FLAKES };
     modules.forEach((build) => build(ctx));
-    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy } = ctx;
+    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, floorCards, updateFloorFx } = ctx;
     let { pixelRatio, explode, sampleSpin, idle } = ctx;      // changed by the loop below (pixelRatio is mirrored back to ctx)
     // ---------- state + loop ----------
     const pointer = { x: 0, y: 0 };
@@ -169,6 +169,18 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         const intro = SHOT !== null ? 1 : 1 - Math.pow(1 - clamp01(t / 2.4), 4);
         renderer.toneMappingExposure = 0.3 + 0.7 * (SHOT !== null ? 1 : 1 - Math.pow(1 - clamp01(t / 1.6), 3));
         bakedMats.forEach((m) => m.color.setScalar(renderer.toneMappingExposure));
+        // floor moment (living room): as the visitor starts scrolling, the camera dips and tilts to
+        // the floor, a band of light sweeps across it and the floor card shows; it eases out again
+        // before the camera leaves for the next room
+        const floorMoment = SHOT !== null ? 0
+            : smooth(clamp01((smoothProgress - 0.015) / 0.05)) * (1 - smooth(clamp01((smoothProgress - 0.12) / 0.05)));
+        if (livingFloor) {
+            // the opening reveals the finished floor over raw concrete, while the camera glides in
+            livingFloor.reveal = SHOT !== null ? 1 : smooth(clamp01((t - 0.4) / 2.4));
+            livingFloor.sweep = clamp01((smoothProgress - 0.02) / 0.13);
+            livingFloor.sweepAmt = floorMoment;
+        }
+        updateFloorFx();
         // idle: when the visitor stops scrolling, the camera breathes a little more (decorative, very small)
         idle = damp(idle, Math.abs(progress - smoothProgress) < 0.002 ? 1 : 0, 1.5, dt);
         const still = SHOT !== null ? 0 : 1;
@@ -176,7 +188,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         const swayY = still * idle * 0.02 * Math.sin(t * 0.41);
         camera.position.set(
             camPos.x + tilt.x * 0.22 + swayX,
-            camPos.y - tilt.y * 0.1 + swayY + (1 - intro) * 0.35,
+            camPos.y - tilt.y * 0.1 + swayY + (1 - intro) * 0.35 - 0.45 * floorMoment,
             camPos.z + (1 - intro) * 2.2,
         );
         // portrait screens: in the living room, look further right so the sample and the glass wall are
@@ -184,7 +196,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         const portrait = clamp01((0.9 - camera.aspect) / 0.4);
         camLook.x += portrait * 3.2 * (1 - smooth(clamp01(u / 0.35)));
         camLook.x += tilt.x * 0.5 + still * idle * 0.06 * Math.sin(t * 0.19);
-        camLook.y -= tilt.y * 0.25;
+        camLook.y -= tilt.y * 0.25 + 0.85 * floorMoment;      // the floor moment tilts the view down
         camera.lookAt(camLook);
 
         // exploded view of the sample: opens a little after the opening, fully as you scroll the
@@ -213,6 +225,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         // the sample's shadow only needs redrawing while the living room is on screen
         const room = roomAt(smoothProgress);
         if (spot.castShadow && room === 0) renderer.shadowMap.needsUpdate = true;
+        floorCards.forEach((el) => el.classList.toggle('is-on', Number(el.dataset.room) === room && floorMoment > 0.4));
 
         if (firstFrame) performance.mark('hero3d:render');
         renderer.render(scene, camera);

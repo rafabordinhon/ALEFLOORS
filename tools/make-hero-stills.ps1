@@ -13,7 +13,7 @@ New-Item -ItemType Directory -Force $tmp | Out-Null
 $session = "ale-stills"
 
 # hide everything drawn over the canvas (text, buttons, header, the readability veil)
-$hide = "const s=document.createElement('style');s.textContent='.site-header,.hero-inner,.room-caption,.room-nav,.tour-controls,.hero-loader,.layer-labels,.hotspot,.spot-card,.whatsapp-float,.mobile-actions,.back-to-top{display:none!important}.hero-media::after{display:none!important}';document.head.appendChild(s);'ok'"
+$hide = "const s=document.createElement('style');s.textContent='.site-header,.hero-inner,.room-caption,.room-nav,.tour-controls,.hero-loader,.layer-labels,.floor-card,.hotspot,.spot-card,.whatsapp-float,.mobile-actions,.back-to-top{display:none!important}.hero-media::after{display:none!important}';document.head.appendChild(s);'ok'"
 function Wait-3D {
     for ($k = 0; $k -lt 60; $k++) {
         $r = agent-browser --session $session eval "document.documentElement.classList.contains('has-3d')"

@@ -24,6 +24,9 @@ Leia isto e o docs/PLAN.md no início de cada fase. Não re-explore o projeto.
   - `scenes/living`, `assets` (GLB .gz + atlas + lightmap, loader), `scenes/garage`, `scenes/outdoor`;
   - `cameraPath` (curvas, `curveAt`, `roomAt`), `ui` (hotspots, `overCopy`).
   - O que muda no loop (`pixelRatio`, `explode`, `sampleSpin`, `idle`) é `let` no `start()`; o `pixelRatio` é espelhado em `ctx.pixelRatio`.
+- `js/hero/floorFx.js` (depois de materials): `ctx.addFloorFx(mat, {x0,x1})` devolve `{reveal, sweep, sweepAmt}`, e o loop chama `ctx.updateFloorFx()`. Shader via `onBeforeCompile`: concreto cru → acabado (cortina em x, com borda quente) e faixa de luz em x. A sala usa no `metallicMat` (`ctx.livingFloor`).
+- Momento do piso (no loop do `hero-3d.js`): `floorMoment` sobe em p 0.015..0.065 e desce em 0.12..0.17. A câmera desce 0.45 e inclina; o `.floor-card[data-room]` ganha `.is-on`. Os cartões ficam no `index.html` (HTML real) e o estilo em `home.css`.
+- Blender, sala da casa: `scripts/house_living.py` (rodado no fim do `build_all.py`).
 - `tools/split-hero.mjs`: o script que fez a divisão (só histórico).
 - Antes da fase 1, o `hero-3d.js` era monolítico (~1100 linhas). Detalhes antigos dele:
   - `canUse3D()`, `start()`, renderer (ACES, shadowMap só da amostra), Reflector no piso, RoomEnvironment (envMap);
