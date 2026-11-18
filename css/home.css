@@ -541,12 +541,12 @@ html:not(.js) .tour-controls {
 }
 
 @media (min-width: 1024px) {
-    /* next to the room bar (the bottom-right corner belongs to the floating WhatsApp button) */
+    /* bottom left, on the content's left edge (the bottom-right corner belongs to the floating WhatsApp button) */
     .tour-controls {
         top: auto;
         right: auto;
-        bottom: 18px;
-        left: calc(max(var(--gutter), calc((100vw - var(--container-wide)) / 2)) + 444px);
+        bottom: 24px;
+        left: max(var(--gutter), calc((100vw - var(--container-wide)) / 2));
     }
 
     .hero-loader {
