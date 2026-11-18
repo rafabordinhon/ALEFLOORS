@@ -68,6 +68,12 @@
 html {
     -webkit-text-size-adjust: 100%;
     scroll-padding-top: calc(var(--header-h) + 16px);
+    /* no visible scrollbar (cinematic look); scrolling still works with wheel, touch and keyboard */
+    scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+    display: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
