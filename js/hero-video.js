@@ -63,7 +63,7 @@
         if (!running) return;
         const p = progress();
         const target = partAt(p) * Math.max(0, video.duration - 0.05);
-        shown += (target - shown) * 0.18;
+        shown += (target - shown) * 0.08; // follows the scroll gently (lower = smoother, slower)
         if (Math.abs(target - shown) < 0.004) shown = target;
         if (!video.seeking && Math.abs(video.currentTime - shown) > 0.02) video.currentTime = shown;
 

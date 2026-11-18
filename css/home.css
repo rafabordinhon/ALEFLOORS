@@ -13,9 +13,10 @@
     color: var(--on-dark);
 }
 
-/* the walk-through needs scrolling room (only with JS; without it the hero is one screen) */
+/* the walk-through needs scrolling room (only with JS; without it the hero is one screen).
+   More height = slower walk: the video's 15 s are spread over 4 screens of scrolling. */
 .js .hero {
-    height: 300vh;
+    height: 500vh;
 }
 
 .hero-stage {

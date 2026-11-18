@@ -58,7 +58,7 @@ AREAS = ["Orlando, FL", "Tampa, FL", "Daytona Beach, FL"]
 PAGES = {
     # home: GSAP + ScrollTrigger + Lenis (smooth scroll, served locally because of the CSP) before home.js
     "index.html": {"nav": "index.html", "schema": "business", "css": ["home"],
-                   "js": ["vendor/gsap.min", "vendor/ScrollTrigger.min", "vendor/lenis.min", "home", "hero-video?v=20261118b"], "modules": ["hero-3d"]},
+                   "js": ["vendor/gsap.min", "vendor/ScrollTrigger.min", "vendor/lenis.min", "home", "hero-video?v=20261118c"], "modules": ["hero-3d"]},
     "service.html": {"nav": "service.html", "css": ["services"]},
     "about.html": {"nav": "about.html", "css": ["about"], "schema": "business"},
     "contact.html": {"nav": "contact.html", "css": ["contact"], "js": ["contact"], "schema": "business"},
