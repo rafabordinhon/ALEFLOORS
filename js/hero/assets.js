@@ -43,7 +43,9 @@ export default function build(ctx) {
                 .finally(() => manager.itemEnd(url));
         };
         // pieces baked on their own (a continuous UV for curved cloth): model + atlas, no floor
-        const extras = [].map((r) => Promise.all([
+        // the kitchen furniture (room-b-furn): one mesh with a continuous UV and its own atlas, so the
+        // oak grain and the stone veins stay sharp (the room atlas gives every face its own tiny island)
+        const extras = (OLD ? [] : ['b-furn']).map((r) => Promise.all([
             model(MODELS + `room-${r}.glb`),
             tex(MODELS + `room-${r}-atlas${size}.webp`, false),
         ]).then(([gltf, atlas]) => {
@@ -53,10 +55,13 @@ export default function build(ctx) {
             gltf.scene.traverse((o) => {
                 if (!o.isMesh) return;
                 o.material = baked;
+                o.layers.enable(1);              // casts contact shadows (see contactShadows.js)
                 geometries.push(o.geometry);
             });
             scene.add(gltf.scene);
         }));
+        // the 3D logo behind the pool: geometry only, placed and given its material by outdoor.js
+        if (!OLD) extras.push(model(MODELS + 'logo.glb').then((gltf) => ctx.placeLogo && ctx.placeLogo(gltf)));
         return Promise.all(extras.concat(['a', 'b', 'c'].map((r) => Promise.all([
             model(MODELS + `room-${r}.glb`),
             tex(MODELS + `room-${r}-atlas${size}.webp`, false),
@@ -68,8 +73,10 @@ export default function build(ctx) {
             gltf.scene.traverse((o) => {
                 if (!o.isMesh) return;
                 o.material = baked;
+                o.layers.enable(1);              // casts contact shadows (see contactShadows.js)
                 geometries.push(o.geometry);
             });
+            gltf.scene.name = 'room-' + r;       // names: see ?off= in js/hero-3d.js
             scene.add(gltf.scene);
             const [mat, channel] = floors[r];
             floorLight.channel = channel;

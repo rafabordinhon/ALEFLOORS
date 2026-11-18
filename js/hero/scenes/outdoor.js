@@ -1,7 +1,7 @@
 // Pool area: deck, pool, water, caustics, waterline and the backlit logo.
 // Built in order by js/hero-3d.js; values shared between modules travel in ctx (see docs/PROJECT_MAP.md).
 export default function build(ctx) {
-    const { THREE, OLD, IMG, MODELS, scene, materials, textures, keep, mesh, box, load, canvasTexture, M, framed, flat, deckMat, deckFlakeMat, floorPool, poolGeo } = ctx;
+    const { THREE, Reflector, OLD, IMG, MODELS, reflectorSize, scene, materials, textures, keep, mesh, box, load, canvasTexture, M, framed, useDuskEnv, flat, deckMat, deckFlakeMat, floorPool, poolGeo } = ctx;
     // ---------- pool area ----------
     // tour-casa: an open-air yard north of the kitchen (x -15..-1.5, z -17..-4.5) with a 7 x 3.6 m pool,
     // a flake/polyaspartic deck, palms, a stone wall with the backlit logo, under a dusk sky.
@@ -41,11 +41,44 @@ export default function build(ctx) {
 
     // dusk sky (a dome with a painted panorama) and the lawn around the yard
     if (!OLD) {
-        const skyMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide, toneMapped: false, depthWrite: false });
-        load(MODELS + 'sky.webp', [1, 1], (t) => { t.wrapS = THREE.RepeatWrapping; skyMat.map = t; skyMat.needsUpdate = true; });
-        const sky = mesh(new THREE.SphereGeometry(70, 48, 24), skyMat, -6, 0, -6);
-        sky.rotation.y = 1.19;                               // puts the setting sun to the west-northwest
-        sky.renderOrder = -1;
+        // the dusk HDRI (Poly Haven qwantani_dusk_2_puresky, CC0), colour graded, on a dome seen from inside
+        const skyMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false, depthWrite: false });
+        load(MODELS + 'sky-dusk.webp', [1, 1], (t) => { t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; skyMat.map = t; skyMat.needsUpdate = true; });
+        const skyGeo = new THREE.SphereGeometry(70, 48, 24);
+        skyGeo.scale(-1, 1, 1);                              // inside out: the image isn't mirrored
+        const sky = mesh(skyGeo, skyMat, -6, 0, -6);
+        sky.rotation.y = 0.543;                              // the glow of the image (u 0.608) goes west, where the baked sun is
+        sky.renderOrder = -2;
+        sky.name = 'sky';
+        // a soft skyline around the yard: far trees and roofs, two layers fading into the haze
+        const skyline = canvasTexture(2048, 128, (c) => {
+            let s = 11;
+            const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+            [['rgba(150, 104, 112, 0.55)', 62, 26, 0.5], ['rgba(64, 48, 66, 0.82)', 40, 20, 1]].forEach(([fill, base, amp, roofs]) => {
+                const ph = [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28];
+                c.fillStyle = fill;
+                c.beginPath();
+                c.moveTo(0, 128);
+                for (let x = 0; x <= 2048; x += 2) {
+                    const a = (x / 2048) * Math.PI * 2;              // whole periods only, so the strip closes on itself
+                    const h = base + amp * (0.5 * Math.sin(a * 3 + ph[0]) + 0.3 * Math.sin(a * 7 + ph[1]) + 0.14 * Math.sin(a * 19 + ph[2]) + 0.1 * Math.sin(a * 43 + ph[3]));
+                    c.lineTo(x, 128 - h);
+                }
+                c.lineTo(2048, 128);
+                c.fill();
+                for (let i = 0; i < 46; i++) {                        // tree crowns, and a few roofs on the near layer
+                    const x = 20 + rnd() * 2000, r = 8 + rnd() * 16, y = 128 - base - amp * 0.2 + rnd() * 12;
+                    c.beginPath();
+                    if (rnd() < 0.25 * roofs) { c.moveTo(x - r * 2, y + r); c.lineTo(x, y - r * 0.2); c.lineTo(x + r * 2, y + r); } else c.ellipse(x, y, r, r * 0.8, 0, 0, Math.PI * 2);
+                    c.fill();
+                }
+            });
+        });
+        skyline.wrapS = THREE.RepeatWrapping;
+        const skylineMat = new THREE.MeshBasicMaterial({ map: skyline, transparent: true, side: THREE.BackSide, toneMapped: false, depthWrite: false });
+        const ring = mesh(new THREE.CylinderGeometry(58, 58, 9, 64, 1, true), skylineMat, -6, 3.6, -6);
+        ring.renderOrder = -1;
+        ring.name = 'ring';
         const lawnMap = canvasTexture(128, 128, (c) => {
             const img = c.createImageData(128, 128);
             for (let i = 0; i < img.data.length; i += 4) {
@@ -145,7 +178,67 @@ export default function build(ctx) {
         color: 0x2bb3c4, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.72,
         normalMap: rippleNormal, normalScale: new THREE.Vector2(0.35, 0.35), envMapIntensity: 1.2,
     });
-    flat(pw, pd, water, pcx, pcz, -0.12);
+    useDuskEnv(water);
+    if (!OLD) useDuskEnv(deckFlakeMat);
+    const waterPlain = flat(pw, pd, water, pcx, pcz, -0.12);
+    // the real water: a mirror of the yard (sky, palms, wall and logo), bent by two layers of moving
+    // ripples and mixed with the water colour by the viewing angle (fresnel). It replaces the floor
+    // mirror of the house while the camera is outside (the loop in js/hero-3d.js switches them), so
+    // only one mirror is drawn at a time. waterPlain is what low quality (no mirrors) shows.
+    let waterMirror = null;
+    const waterTime = { value: 0 };
+    if (!OLD) {
+        const [rw, rh] = reflectorSize();
+        const waterGeo = new THREE.PlaneGeometry(pw, pd);
+        waterMirror = new Reflector(waterGeo, {
+            textureWidth: rw, textureHeight: rh, color: 0x1f8fa3, clipBias: 0.003,
+            shader: {
+                name: 'PoolWater',
+                uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, uNormal: { value: null }, uTime: { value: 0 } },
+                vertexShader: `
+uniform mat4 textureMatrix;
+varying vec4 vUv;
+varying vec3 vWorld;
+void main() {
+    vUv = textureMatrix * vec4(position, 1.0);
+    vec4 world = modelMatrix * vec4(position, 1.0);
+    vWorld = world.xyz;
+    gl_Position = projectionMatrix * viewMatrix * world;
+}`,
+                fragmentShader: `
+uniform vec3 color;
+uniform sampler2D tDiffuse;
+uniform sampler2D uNormal;
+uniform float uTime;
+varying vec4 vUv;
+varying vec3 vWorld;
+void main() {
+    vec2 p = vWorld.xz;
+    vec2 n1 = texture2D(uNormal, p * 0.42 + vec2(uTime * 0.02, uTime * 0.013)).xy * 2.0 - 1.0;
+    vec2 n2 = texture2D(uNormal, p * 0.83 + vec2(-uTime * 0.016, uTime * 0.021)).xy * 2.0 - 1.0;
+    vec2 d = (n1 + n2) * 0.5;
+    vec3 N = normalize(vec3(d.x * 0.45, 1.0, d.y * 0.45));
+    vec3 V = normalize(cameraPosition - vWorld);
+    float fresnel = 0.04 + 0.96 * pow(1.0 - max(dot(N, V), 0.0), 5.0);
+    vec4 uv = vUv;
+    uv.xy += d * 0.02 * uv.w;
+    vec3 reflection = texture2DProj(tDiffuse, uv).rgb;
+    float k = clamp(fresnel * 1.5 + 0.1, 0.0, 1.0);
+    gl_FragColor = vec4(mix(color, reflection, k), mix(0.5, 0.97, k));
+    #include <colorspace_fragment>
+}`,
+            },
+        });
+        waterMirror.material.uniforms.uNormal.value = rippleNormal;
+        waterMirror.material.uniforms.uTime = waterTime;
+        waterMirror.material.transparent = true;
+        waterMirror.material.depthWrite = false;
+        waterMirror.material.toneMapped = false;
+        waterMirror.rotation.x = -Math.PI / 2;
+        waterMirror.position.set(pcx, -0.118, pcz);
+        scene.add(waterMirror);
+        keep(waterGeo);
+    }
     const poolLight = new THREE.PointLight(0x6fd3e0, 6, 6, 2);
     poolLight.position.set(pcx, 0.3, pcz);
     scene.add(poolLight);
@@ -176,7 +269,7 @@ export default function build(ctx) {
     });
     mosaic.repeat.set(6, 1);
 
-    // backlit logo on the north wall: the end of the walk
+    // ?old: the logo painted on a plane with a halo, on the room's north wall
     const logoTexture = canvasTexture(1024, 256, () => {});
     const drawLogo = () => {
         const c = logoTexture.image.getContext('2d');
@@ -203,10 +296,34 @@ export default function build(ctx) {
     materials.push(haloMat);
     const halo = new THREE.Mesh(poolGeo, haloMat);
     halo.scale.set(2.2, 0.9, 1);
-    // ?old: on the room's north wall; tour-casa: on the stone wall behind the pool (z -15.2, 0.3 thick)
-    if (OLD) halo.position.set(-9, 2.45, -13.38); else halo.position.set((pool.x0 + pool.x1) / 2, 1.55, -15.04);
-    scene.add(halo);
-    mesh(new THREE.PlaneGeometry(3.4, 0.85), new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true, depthWrite: false }), OLD ? -9 : (pool.x0 + pool.x1) / 2, OLD ? 2.45 : 1.55, OLD ? -13.37 : -15.03);
+    halo.position.set(-9, 2.45, -13.38);
+    if (OLD) scene.add(halo);
+    if (OLD) mesh(new THREE.PlaneGeometry(3.4, 0.85), new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true, depthWrite: false }), -9, 2.45, -13.37);
 
-    Object.assign(ctx, { causticLayers, rippleNormal, outdoorFloor });
+    // tour-casa: "Ale Floors" in 3D box letters of brushed bronze on the travertine wall behind the pool
+    // (the end of the walk). The letters come from the site's fonts, extruded in Blender
+    // (scripts/make_logo.py -> logo.glb, already in place, 6 cm off the wall); behind them a warm halo
+    // (logo-halo.webp, the letters blurred) that the loop turns on as the camera arrives. The pool
+    // mirror reflects both.
+    let logoGlow = null;
+    if (!OLD) {
+        const bronze = new THREE.MeshStandardMaterial({ color: 0x5e4126, roughness: 0.42, metalness: 1, envMapIntensity: 1.2 });
+        useDuskEnv(bronze);
+        materials.push(bronze);
+        ctx.placeLogo = (gltf) => {
+            gltf.scene.traverse((o) => {
+                if (!o.isMesh) return;
+                o.material = bronze;
+                keep(o.geometry);
+            });
+            gltf.scene.name = 'logo';
+            scene.add(gltf.scene);
+        };
+        logoGlow = new THREE.MeshBasicMaterial({ color: 0xffc27a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+        load(MODELS + 'logo-halo.webp', [1, 1], (t) => { t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; logoGlow.map = t; logoGlow.needsUpdate = true; });
+        logoGlow.color.setRGB(1.7, 1.15, 0.62);             // above 1 on purpose: a bright, warm core
+        mesh(new THREE.PlaneGeometry(4.8, 1.6), logoGlow, (pool.x0 + pool.x1) / 2, 1.42, -15.04);
+    }
+
+    Object.assign(ctx, { causticLayers, rippleNormal, outdoorFloor, waterMirror, waterPlain, waterTime, logoGlow });
 }

@@ -57,25 +57,27 @@
 
     <main id="main">
 
-    <!-- Hero: a walk through a 3-room showroom (js/hero-3d.js). The section is tall and the
+    <!-- Hero: a walk through a 3-room showroom (video: js/hero-video.js; ?3d = the old Three.js tour, js/hero-3d.js). The section is tall and the
          stage sticks to the screen while the visitor scrolls; js/home.js turns the scroll into
          progress (rooms, captions). Without 3D, three still renders of the rooms crossfade. -->
     <section class="hero" id="showroom" aria-labelledby="hero-title" data-header-dark>
         <div class="hero-stage">
             <div class="hero-media" aria-hidden="true">
             <picture class="hero-still is-active" data-room="0">
-                <source media="(max-width: 1023px)" srcset="assets/images/hero/showroom-1-mobile.webp?v=20261110" width="780" height="1688">
-                <img src="assets/images/hero/showroom-1.webp?v=20261110" alt="" width="1600" height="1000" fetchpriority="high" data-no-srcset>
+                <source media="(max-width: 1023px)" srcset="assets/images/hero/showroom-1-mobile.webp?v=20261118" width="780" height="1688">
+                <img src="assets/images/hero/showroom-1.webp?v=20261118" alt="" width="1600" height="1000" fetchpriority="high" data-no-srcset>
             </picture>
             <picture class="hero-still" data-room="1">
-                <source media="(max-width: 1023px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="assets/images/hero/showroom-2-mobile.webp?v=20261110" width="780" height="1688">
-                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="assets/images/hero/showroom-2.webp?v=20261110" alt="" width="1600" height="1000" loading="eager" data-no-srcset>
+                <source media="(max-width: 1023px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="assets/images/hero/showroom-2-mobile.webp?v=20261118" width="780" height="1688">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="assets/images/hero/showroom-2.webp?v=20261118" alt="" width="1600" height="1000" loading="eager" data-no-srcset>
             </picture>
             <picture class="hero-still" data-room="2">
-                <source media="(max-width: 1023px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="assets/images/hero/showroom-3-mobile.webp?v=20261110" width="780" height="1688">
-                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="assets/images/hero/showroom-3.webp?v=20261110" alt="" width="1600" height="1000" loading="eager" data-no-srcset>
+                <source media="(max-width: 1023px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="assets/images/hero/showroom-3-mobile.webp?v=20261118" width="780" height="1688">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="assets/images/hero/showroom-3.webp?v=20261118" alt="" width="1600" height="1000" loading="eager" data-no-srcset>
             </picture>
                 <canvas class="hero-canvas" id="heroCanvas"></canvas>
+                <!-- photoreal walk-through (AI video), scrubbed by the scroll in js/hero-video.js -->
+                <video class="hero-video" muted playsinline preload="auto" disablepictureinpicture tabindex="-1" data-src="assets/video/tour.mp4" data-src-mobile="assets/video/tour-mobile.mp4"></video>
             </div>
 
             <div class="hero-inner container-wide room-panel is-active" data-room="0">
@@ -90,9 +92,9 @@
             </div>
 
             <div class="room-caption room-panel" data-room="1">
-                <p class="room-name">Polished Concrete</p>
-                <p>Great value for money, can be applied directly to concrete. Perfect for home or business with great aesthetics and easy to clean.</p>
-                <a class="btn btn-ghost btn-small" href="service.html#polished">Polished concrete</a>
+                <p class="room-name">Metallic Epoxy Kitchen</p>
+                <p>One seamless, glossy surface from the living room into the kitchen. Resistant to impacts, chemicals and daily wear, and easy to clean.</p>
+                <a class="btn btn-ghost btn-small" href="service.html#metallic">Metallic epoxy</a>
             </div>
 
             <div class="room-caption room-panel" data-room="2">
@@ -121,14 +123,14 @@
                 <a class="btn btn-primary btn-small" href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20a%20free%20quote%20for%20a%20metallic%20epoxy%20floor." target="_blank" rel="noopener">Get a Free Quote</a>
             </aside>
 
-            <aside class="floor-card" data-room="1" aria-label="Polished Concrete">
-                <p class="floor-card-name">Polished Concrete</p>
+            <aside class="floor-card" data-room="1" aria-label="Metallic Epoxy Kitchen">
+                <p class="floor-card-name">Metallic Epoxy Kitchen</p>
                 <ul class="floor-card-list">
-                    <li>Great value for money</li>
-                    <li>Applied directly to the concrete you already have</li>
-                    <li>Great aesthetics and easy to clean</li>
+                    <li>Seamless: no grout lines to trap dirt</li>
+                    <li>Resistant to impacts, chemicals and daily wear</li>
+                    <li>Easy to clean, made for busy kitchens</li>
                 </ul>
-                <a class="btn btn-primary btn-small" href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20a%20free%20quote%20for%20a%20polished%20concrete%20floor." target="_blank" rel="noopener">Get a Free Quote</a>
+                <a class="btn btn-primary btn-small" href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20a%20free%20quote%20for%20a%20metallic%20epoxy%20kitchen%20floor." target="_blank" rel="noopener">Get a Free Quote</a>
             </aside>
 
             <aside class="floor-card" data-room="2" aria-label="Polyaspartic Pool Deck">
@@ -159,10 +161,10 @@
                 <p>From your luxurious living room to your office. Guaranteed quality and durability with our 4-layer procedure. Impact resistant and ideal for indoor use.</p>
                 <a class="btn btn-primary btn-small" href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20a%20free%20quote." target="_blank" rel="noopener">Get a Free Quote</a>
             </div>
-            <button type="button" class="hotspot" data-room="1" aria-expanded="false" aria-controls="spot-1"><span class="sr-only">About Polished Concrete</span></button>
-            <div class="spot-card" id="spot-1" role="dialog" aria-label="Polished Concrete" hidden>
-                <p class="spot-title">Polished Concrete</p>
-                <p>Great value for money, can be applied directly to concrete. Perfect for home or business with great aesthetics and easy to clean.</p>
+            <button type="button" class="hotspot" data-room="1" aria-expanded="false" aria-controls="spot-1"><span class="sr-only">About Metallic Epoxy in the kitchen</span></button>
+            <div class="spot-card" id="spot-1" role="dialog" aria-label="Metallic Epoxy Kitchen" hidden>
+                <p class="spot-title">Metallic Epoxy Kitchen</p>
+                <p>One seamless, glossy surface from the living room into the kitchen. Resistant to impacts, chemicals and daily wear, and easy to clean.</p>
                 <a class="btn btn-primary btn-small" href="https://wa.me/13479986695?text=Hi%20Ale%20Floors!%20I'd%20like%20a%20free%20quote." target="_blank" rel="noopener">Get a Free Quote</a>
             </div>
             <button type="button" class="hotspot" data-room="2" aria-expanded="false" aria-controls="spot-2"><span class="sr-only">About Polyaspartic Pool Deck</span></button>
@@ -605,6 +607,7 @@
     <script src="js/vendor/ScrollTrigger.min.js" defer></script>
     <script src="js/vendor/lenis.min.js" defer></script>
     <script src="js/home.js" defer></script>
+    <script src="js/hero-video.js?v=20261118b" defer></script>
     <script type="module" src="js/hero-3d.js"></script>
 </body>
 </html>

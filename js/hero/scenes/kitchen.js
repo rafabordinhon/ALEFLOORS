@@ -1,8 +1,9 @@
-// Kitchen (tour-casa, phase 3): open to the living room, x -13.5..-4.5, z -4.5..4.5. Cabinets, island,
-// stools and pendants are baked in room-b.glb (Blender: scripts/house_kitchen.py). Live here: the
-// polished concrete floor with its reveal and light sweep.
+// Kitchen (tour-casa, phase 3): open to the living room, x -13.5..-4.5, z -4.5..4.5. Cabinets, island
+// and stools are baked in room-b-furn.glb, walls and ceiling in room-b.glb (Blender:
+// scripts/house_kitchen.py). Live here: the polished concrete floor with its reveal and light sweep,
+// the sliding door and the three glass pendants over the island (so they reflect in the floor).
 export default function build(ctx) {
-    const { THREE, OLD, concreteMat, scene, keep } = ctx;
+    const { THREE, OLD, H, concreteMat, scene, keep, canvasTexture } = ctx;
     if (OLD) return;
     const kitchenFloor = ctx.addFloorFx(concreteMat, { x0: -13.5, x1: -4.5 });
     kitchenFloor.reveal = 0;                 // raw concrete until the visitor reaches the kitchen
@@ -33,5 +34,46 @@ export default function build(ctx) {
     scene.add(track);
     keep(track.geometry);
     ctx.setDoorOpen = (k) => { sliding.position.x = -8.14 - 1.62 * k; };
+    // pendants over the island (x -9.35, z -0.55 / 0.3 / 1.15): smoked glass globe, warm bulb, brass
+    // fittings. Live (not baked) so the glass shows the room and the bulbs light up the floor mirror.
+    const brass = new THREE.MeshStandardMaterial({ color: 0xb08a4e, roughness: 0.32, metalness: 1 });
+    const cord = new THREE.MeshStandardMaterial({ color: 0x1c1916, roughness: 0.6 });
+    const globeMat = new THREE.MeshStandardMaterial({ color: 0xc9a67c, roughness: 0.05, metalness: 0.9, transparent: true, opacity: 0.3, depthWrite: false, envMapIntensity: 1.6 });
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffdfae, toneMapped: false });
+    const glowTexture = canvasTexture(128, 128, (c) => {
+        const g = c.createRadialGradient(64, 64, 0, 64, 64, 64);
+        g.addColorStop(0, 'rgba(255, 214, 150, 1)');
+        g.addColorStop(0.25, 'rgba(255, 190, 120, 0.35)');
+        g.addColorStop(1, 'rgba(255, 170, 90, 0)');
+        c.fillStyle = g;
+        c.fillRect(0, 0, 128, 128);
+    });
+    const glowMat = new THREE.SpriteMaterial({ map: glowTexture, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.8, toneMapped: false });
+    const GLOBE_Y = 2.02;
+    const pendantGeo = {
+        canopy: new THREE.CylinderGeometry(0.055, 0.055, 0.02, 20),
+        cord: new THREE.CylinderGeometry(0.004, 0.004, H - GLOBE_Y - 0.18, 6),
+        cap: new THREE.CylinderGeometry(0.028, 0.04, 0.07, 20),
+        globe: new THREE.SphereGeometry(0.15, 32, 20),
+        bulb: new THREE.SphereGeometry(0.032, 16, 12),
+    };
+    Object.values(pendantGeo).forEach((g) => keep(g));
+    keep(null, [brass, cord, globeMat, bulbMat, glowMat]);
+    [-0.55, 0.3, 1.15].forEach((z) => {
+        const g = new THREE.Group();
+        g.position.set(-9.35, 0, z);
+        const part = (geo, mat, y) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; g.add(m); return m; };
+        part(pendantGeo.canopy, brass, H - 0.01);
+        part(pendantGeo.cord, cord, (H + GLOBE_Y + 0.18) / 2);
+        part(pendantGeo.cap, brass, GLOBE_Y + 0.165);
+        part(pendantGeo.bulb, bulbMat, GLOBE_Y + 0.02);
+        part(pendantGeo.globe, globeMat, GLOBE_Y).renderOrder = 3;
+        const glow = new THREE.Sprite(glowMat);
+        glow.position.y = GLOBE_Y + 0.02;
+        glow.scale.setScalar(0.75);
+        glow.renderOrder = 4;
+        g.add(glow);
+        scene.add(g);
+    });
     Object.assign(ctx, { kitchenFloor });
 }

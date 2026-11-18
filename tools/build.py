@@ -58,7 +58,7 @@ AREAS = ["Orlando, FL", "Tampa, FL", "Daytona Beach, FL"]
 PAGES = {
     # home: GSAP + ScrollTrigger + Lenis (smooth scroll, served locally because of the CSP) before home.js
     "index.html": {"nav": "index.html", "schema": "business", "css": ["home"],
-                   "js": ["vendor/gsap.min", "vendor/ScrollTrigger.min", "vendor/lenis.min", "home"], "modules": ["hero-3d"]},
+                   "js": ["vendor/gsap.min", "vendor/ScrollTrigger.min", "vendor/lenis.min", "home", "hero-video?v=20261118b"], "modules": ["hero-3d"]},
     "service.html": {"nav": "service.html", "css": ["services"]},
     "about.html": {"nav": "about.html", "css": ["about"], "schema": "business"},
     "contact.html": {"nav": "contact.html", "css": ["contact"], "js": ["contact"], "schema": "business"},
@@ -264,7 +264,10 @@ def build_footer(cfg: dict) -> str:
             social.append(f'<span class="footer-social-placeholder" title="Instagram link coming soon">{icon(key)}<span>Instagram (coming soon)</span></span>')
     social_block = "\n                        ".join(social)
     scripts = ["script"] + cfg.get("js", [])
-    script_tags = "\n".join(f'    <script src="js/{js}.js" defer></script>' for js in scripts)
+    # an entry may carry a cache-busting version: "hero-video?v=..." -> js/hero-video.js?v=...
+    script_tags = "\n".join(
+        f'    <script src="js/{js.partition("?")[0]}.js{"?" + js.partition("?")[2] if "?" in js else ""}" defer></script>'
+        for js in scripts)
     script_tags += "".join(f'\n    <script type="module" src="js/{m}.js"></script>' for m in cfg.get("modules", []))
     year = datetime.date.today().year
     days = HOURS["days"]
@@ -496,6 +499,7 @@ def write_support_files(pages: list) -> None:
         "font-src 'self' https://fonts.gstatic.com",
         f"img-src 'self' data: {analytics}",
         f"connect-src 'self' {analytics}",
+        "media-src 'self' blob:",  # home hero video plays from a blob (js/hero-video.js)
         "frame-src https://www.google.com https://maps.google.com",
         "form-action 'self'",
         "base-uri 'self'",

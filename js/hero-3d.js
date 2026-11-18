@@ -25,7 +25,7 @@ const FORCED_TIER = ['low', 'mid', 'high'].includes(params.get('tier')) ? params
 const MODELS = 'assets/3d/';
 // Added to every 3D model/texture URL. Change it whenever files in assets/ are replaced under the same
 // name, so browsers that cached the old ones fetch the new ones (assets/ is also revalidated on each visit).
-const ASSET_V = '?v=20261110';
+const ASSET_V = '?v=20261111';
 const FLOOR_LIGHT_GAIN = 4;      // floor light maps are stored at 1/4 so bright spots don't clip
 
 // real colors of six flake blends (from the catalog swatches): [color, share]
@@ -41,6 +41,8 @@ const FLAKES = {
 function canUse3D() {
     if (!canvas || !hero) return false;
     if (params.has('no3d')) return false;
+    // the home now opens with the photoreal video (js/hero-video.js); ?3d brings this tour back
+    if (!params.has('3d') && SHOT === null) return false;
     if (SHOT !== null) return true;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
     const connection = navigator.connection;
@@ -64,16 +66,16 @@ function whenIdle(callback) {
 if (canUse3D()) {
     whenIdle(() => {
         performance.mark('hero3d:idle');
-        Promise.all([import('./vendor/three.module.min.js'), import('./vendor/RoomEnvironment.js'), import('./vendor/Reflector.js'), import('./vendor/GLTFLoader.js'), import('./hero/index.js')])
-            .then(([THREE, env, refl, gltf, hero3d]) => start(THREE, env.RoomEnvironment, refl.Reflector, gltf.GLTFLoader, hero3d.default))
+        Promise.all([import('./vendor/three.module.min.js'), import('./vendor/RoomEnvironment.js'), import('./vendor/Reflector.js'), import('./vendor/GLTFLoader.js'), import('./vendor/RGBELoader.js'), import('./hero/index.js')])
+            .then(([THREE, env, refl, gltf, rgbe, hero3d]) => start(THREE, env.RoomEnvironment, refl.Reflector, gltf.GLTFLoader, rgbe.RGBELoader, hero3d.default))
             .catch((error) => console.warn('3D hero disabled:', error));
     });
 }
 
-function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
-    const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, ASSET_V, FLOOR_LIGHT_GAIN, FLAKES };
+function start(THREE, RoomEnvironment, Reflector, GLTFLoader, RGBELoader, modules) {
+    const ctx = { THREE, RoomEnvironment, Reflector, GLTFLoader, RGBELoader, canvas, hero, params, SHOT, OLD, FORCED_TIER, MODELS, ASSET_V, FLOOR_LIGHT_GAIN, FLAKES };
     modules.forEach((build) => build(ctx));
-    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, outdoorFloor, floorCards, updateFloorFx, hemi, setDoorOpen } = ctx;
+    const { mobile, renderer, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, load, photos, metallicMat, flakeMat, reflectorSize, mirror, onFlake, dust, sample, spot, sampleLayers, layerLabels, layerPoint, flame, bakedMats, loadRooms, hideLoader, causticLayers, rippleNormal, pathPos, pathLook, smooth, curveAt, roomAt, spotEls, anchors, projected, measureCopy, overCopy, livingFloor, kitchenFloor, outdoorFloor, floorCards, updateFloorFx, hemi, setDoorOpen, duskEnvReady, minPixelRatio, buildContactShadows, waterMirror, waterPlain, waterTime, palmWind, logoGlow } = ctx;
     // interior warm -> outdoor dusk (hemisphere light and background), see the loop
     const HEMI_IN = [new THREE.Color(0xffe7cc), new THREE.Color(0x2a2018)];
     const HEMI_OUT = [new THREE.Color(0xb9a9d8), new THREE.Color(0x3a3024)];
@@ -114,6 +116,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         camera.updateProjectionMatrix();
         const [w, h] = reflectorSize();
         mirror.getRenderTarget().setSize(w, h);
+        if (waterMirror) waterMirror.getRenderTarget().setSize(w, h);
         measureCopy();
     }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureCopy);
@@ -123,9 +126,11 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
     const TIERS = ['low', 'mid', 'high'];
     const floorOpacity = new Map([[metallicMat, metallicMat.opacity], [flakeMat, flakeMat.opacity]]);
     let tier = 'high';
+    let mirrorsOn = true;
     function applyTier(next) {
         tier = next;
         const low = tier === 'low';
+        mirrorsOn = !low;                      // which of the two mirrors is drawn is decided in the loop
         mirror.visible = !low;
         floorOpacity.forEach((opacity, m) => { m.opacity = low ? 1 : opacity; });
         dust.visible = !low;
@@ -133,7 +138,8 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
             spot.castShadow = !low;
             renderer.shadowMap.needsUpdate = true;
         }
-        const cap = tier === 'high' ? (mobile ? 1.5 : 2) : tier === 'mid' ? 1.25 : 1;
+        // only weak devices trade resolution for speed; a desktop keeps its pixel ratio (minPixelRatio)
+        const cap = Math.max(minPixelRatio, tier === 'high' ? (mobile ? 1.5 : 2) : tier === 'mid' ? 1.25 : 1);
         if (pixelRatio > cap) {
             pixelRatio = cap;
             ctx.pixelRatio = pixelRatio;
@@ -146,17 +152,17 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         const dt = Math.min((now - lastTime) / 1000, 0.05);
         // keep it fluid: if frames stay slow (~under 40 fps for a second and a half), step down:
         // first the resolution, then the quality level
-        if (SHOT === null && !FORCED_TIER && (pixelRatio > 1 || tier !== 'low')) {
+        if (SHOT === null && !FORCED_TIER && (pixelRatio > minPixelRatio || tier !== 'low')) {
             frameCount++;
             if (dt > 0.026) slowFrames++;
             if (frameCount >= 90) {
                 if (slowFrames > 45) {
-                    if (pixelRatio > 1) {
-                        pixelRatio = Math.max(1, pixelRatio - 0.25);
+                    if (pixelRatio > minPixelRatio) {
+                        pixelRatio = Math.max(minPixelRatio, pixelRatio - 0.25);
                         ctx.pixelRatio = pixelRatio;
                         renderer.setPixelRatio(pixelRatio);
                         resize();
-                    } else {
+                    } else if (tier !== 'low') {
                         applyTier(TIERS[TIERS.indexOf(tier) - 1]);
                     }
                 }
@@ -218,6 +224,15 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
             hemi.groundColor.copy(HEMI_IN[1]).lerp(HEMI_OUT[1], outside);
             hemi.intensity = 0.3 + 0.25 * outside;
             scene.background.copy(BG_IN).lerp(BG_OUT, outside);
+            // the halo behind the logo comes on as the camera reaches the pool
+            if (logoGlow) logoGlow.opacity = toShot(smooth(clamp01((smoothProgress - 0.8) / 0.14)));
+            // one mirror at a time: the floor of the house indoors, the pool once the door is open
+            const atPool = SHOT !== null ? SHOT === 2 : smoothProgress > 0.66;
+            mirror.visible = mirrorsOn && !atPool;
+            if (waterMirror) {
+                waterMirror.visible = mirrorsOn && atPool;
+                waterPlain.visible = !waterMirror.visible;
+            }
         }
         // idle: when the visitor stops scrolling, the camera breathes a little more (decorative, very small)
         idle = damp(idle, Math.abs(progress - smoothProgress) < 0.002 ? 1 : 0, 1.5, dt);
@@ -251,6 +266,8 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
             m.position.y = restY + i * (0.006 + 0.2 * explode) + (i ? 0.003 * Math.sin(t * 0.9 + i) : 0);
         });
         rippleNormal.offset.set(t * 0.02, t * 0.013);
+        waterTime.value = t;
+        palmWind.value = t;
         causticLayers[0].offset.set(t * 0.03, t * 0.017);
         causticLayers[1].offset.set(-t * 0.022, t * 0.028);
         if (flame) {                     // flicker: two slow sines and a faster one, never fully off
@@ -388,6 +405,7 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
         new Set(materials).forEach((m) => m.dispose());
         textures.forEach((t) => t.dispose());
         mirror.dispose();
+        if (waterMirror) waterMirror.dispose();
         envMap.dispose();
         pmrem.dispose();
         renderer.dispose();
@@ -419,8 +437,25 @@ function start(THREE, RoomEnvironment, Reflector, GLTFLoader, modules) {
             metallicMat.needsUpdate = true;
         }),
         loadRooms(),
+        duskEnvReady,
     ]).then(() => {
         performance.mark('hero3d:loaded');
+        buildContactShadows();
+        // ?off=name,name hides scene objects by name (sky, ring, trunks, fronds, logo, room-a|b|c), to
+        // find what costs frames: compare tools/perf/measure.ps1 -Url "...?off=..." runs
+        const off = (params.get('off') || '').split(',');
+        scene.traverse((o) => { if (o.name && off.includes(o.name)) o.visible = false; });
+        // the floor mirror of the house skips the yard (nobody sees it in the floor): the palms, the
+        // furniture of the yard, the skyline and the logo are not drawn a second time indoors. The pool
+        // mirror keeps them all.
+        const yardOnly = [];
+        scene.traverse((o) => { if (['trunks', 'fronds', 'room-c', 'logo', 'ring'].includes(o.name) && o.visible) yardOnly.push(o); });
+        const drawMirror = mirror.onBeforeRender;
+        mirror.onBeforeRender = function (...args) {
+            yardOnly.forEach((o) => { o.visible = false; });
+            drawMirror.apply(this, args);
+            yardOnly.forEach((o) => { o.visible = true; });
+        };
         // the floor mirror draws the scene into a render target, where three uses other shader
         // variants (no tone mapping, linear output): compile those too, or the first frame
         // compiles them and freezes the page (~1.7 s measured)

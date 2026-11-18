@@ -1,7 +1,7 @@
 // Renderer, scene, camera, environment, bookkeeping for dispose(), mesh helpers and base materials.
 // Built in order by js/hero-3d.js; values shared between modules travel in ctx (see docs/PROJECT_MAP.md).
 export default function build(ctx) {
-    const { THREE, RoomEnvironment, canvas, ASSET_V } = ctx;
+    const { THREE, RoomEnvironment, RGBELoader, canvas, ASSET_V, MODELS } = ctx;
     performance.mark('hero3d:start');   // marks: idle -> start -> loaded -> first-frame (see DevTools > Performance)
     const mobile = window.innerWidth < 768;
     const IMG = 'assets/images/';
@@ -10,9 +10,13 @@ export default function build(ctx) {
     const DOOR_H = 3;
 
     // ---------- renderer, scene, camera ----------
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     let pixelRatio = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
     renderer.setPixelRatio(pixelRatio);
+    // the adaptive quality only lowers the resolution on weak devices (phones, little memory or few
+    // cores); a desktop keeps its own pixel ratio and gives up effects instead (see the tiers)
+    const weak = mobile || (navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4;
+    const minPixelRatio = weak ? 1 : pixelRatio;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     // one real-time shadow: the turning floor sample under its spot (the rooms' shadows are baked).
@@ -28,6 +32,18 @@ export default function build(ctx) {
     const roomEnv = new RoomEnvironment();
     const envMap = pmrem.fromScene(roomEnv, 0.04).texture;
     scene.environment = envMap;
+    // outdoors: a dusk HDRI (Poly Haven qwantani_dusk_2_puresky, CC0, 512 px) through PMREM. Indoors keep
+    // the room environment; the outdoor materials ask for the dusk one with useDuskEnv(material).
+    const duskUsers = [];
+    let duskEnv = null;
+    const useDuskEnv = (material) => { if (duskEnv) { material.envMap = duskEnv; material.needsUpdate = true; } else duskUsers.push(material); };
+    const duskEnvReady = new RGBELoader().loadAsync(MODELS + 'env-dusk.hdr' + ASSET_V).then((hdr) => {
+        hdr.mapping = THREE.EquirectangularReflectionMapping;
+        duskEnv = pmrem.fromEquirectangular(hdr).texture;
+        hdr.dispose();
+        textures.push(duskEnv);
+        duskUsers.forEach((m) => { m.envMap = duskEnv; m.needsUpdate = true; });
+    }).catch((error) => console.warn('dusk environment missing:', error));
 
     // ---------- bookkeeping for dispose() ----------
     const geometries = [];
@@ -46,7 +62,7 @@ export default function build(ctx) {
     };
     const box = (w, h, d, material, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), material, x, y, z, parent);
     const loader = new THREE.TextureLoader();
-    const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    const anisotropy = Math.min(mobile ? 8 : 16, renderer.capabilities.getMaxAnisotropy());
     const load = (url, repeat, onReady) => new Promise((resolve) => {
         const t = loader.load(url + ASSET_V, () => { if (onReady) onReady(t); resolve(t); }, undefined, () => resolve(t));
         t.colorSpace = THREE.SRGBColorSpace;
@@ -62,6 +78,7 @@ export default function build(ctx) {
         draw(c.getContext('2d'), c);
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = anisotropy;
         textures.push(t);
         return t;
     };
@@ -84,5 +101,5 @@ export default function build(ctx) {
     Object.values(M).forEach((m) => materials.push(m));
     load(IMG + 'hero/plaster.webp', [4, 1.5], (t) => { M.plaster.map = t; M.plaster.needsUpdate = true; });
 
-    Object.assign(ctx, { mobile, IMG, H, DOOR_W, DOOR_H, renderer, pixelRatio, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, keep, mesh, box, anisotropy, load, canvasTexture, M });
+    Object.assign(ctx, { mobile, IMG, H, DOOR_W, DOOR_H, renderer, pixelRatio, minPixelRatio, useDuskEnv, duskEnvReady, scene, camera, pmrem, roomEnv, envMap, geometries, materials, textures, keep, mesh, box, anisotropy, load, canvasTexture, M });
 }

@@ -9,7 +9,9 @@ import assets from './assets.js';
 import garage from './scenes/garage.js';
 import kitchen from './scenes/kitchen.js';
 import outdoor from './scenes/outdoor.js';
+import palms from './scenes/palms.js';
 import cameraPath from './cameraPath.js';
 import ui from './ui.js';
+import contactShadows from './contactShadows.js';
 
-export default [core, props, materials, floorFx, lights, living, assets, garage, kitchen, outdoor, cameraPath, ui];
+export default [core, props, materials, floorFx, lights, living, assets, garage, kitchen, outdoor, palms, cameraPath, ui, contactShadows];

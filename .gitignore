@@ -4,3 +4,6 @@ desktop.ini
 .vscode/
 node_modules/
 .netlify/
+
+# raw Higgsfield clips (the site uses assets/video/, made by tools/make-hero-video.sh)
+assets/videos/

@@ -31,7 +31,7 @@ export default function build(ctx) {
     };
     const [rw, rh] = reflectorSize();
     const mirrorGeometry = new THREE.PlaneGeometry(18, 11.5);
-    const mirror = new Reflector(mirrorGeometry, { textureWidth: rw, textureHeight: rh, color: 0x8c857c, clipBias: 0.003 });
+    const mirror = new Reflector(mirrorGeometry, { textureWidth: rw, textureHeight: rh, color: 0x8c857c, clipBias: 0.003, multisample: 0 });   // seen through the floor's gloss: no need for MSAA
     mirror.rotation.x = -Math.PI / 2;
     mirror.position.set(-4.5, -0.002, 1.25);
     scene.add(mirror);

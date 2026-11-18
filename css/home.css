@@ -79,6 +79,27 @@
     opacity: 0;
 }
 
+/* photoreal video tour (js/hero-video.js adds html.has-video once the first frame is ready) */
+.hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 60%;
+    opacity: 0;
+    transition: opacity 900ms var(--ease-out);
+    pointer-events: none;
+}
+
+.has-video .hero-video {
+    opacity: 1;
+}
+
+.has-video .hero-still {
+    opacity: 0;
+}
+
 /* readability: a soft warm-dark veil where the text sits, light elsewhere */
 .hero-media::after {
     content: "";
@@ -316,7 +337,7 @@ html:not(.js) .room-nav {
     line-height: 1.5;
 }
 
-html:not(.has-3d) .floor-card {
+html:not(.has-3d):not(.has-video) .floor-card {
     display: none;
 }
 

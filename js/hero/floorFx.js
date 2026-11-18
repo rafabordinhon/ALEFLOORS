@@ -8,11 +8,17 @@ export default function build(ctx) {
     const raw = { value: null };
     load('assets/images/hero/concrete.webp', [1, 1], (t) => { raw.value = t; });
     const list = [];
+    // contact shadows (see contactShadows.js): a blurred image of what stands on the floor, in world xz
+    const noContact = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+    noContact.needsUpdate = true;
+    ctx.textures.push(noContact);
 
     ctx.addFloorFx = (material, { x0, x1 }) => {
         const fx = {
             reveal: 1, sweep: 0, sweepAmt: 0, x0, x1,
-            u: { uRevealX: { value: x1 + 2 }, uSweepX: { value: x0 - 2 }, uSweepAmt: { value: 0 }, uEdge: { value: 0 }, uRaw: raw },
+            u: { uRevealX: { value: x1 + 2 }, uSweepX: { value: x0 - 2 }, uSweepAmt: { value: 0 }, uEdge: { value: 0 }, uRaw: raw,
+                uContact: { value: noContact }, uContactRect: { value: new THREE.Vector4(0, 0, 1, 1) }, uContactAmt: { value: 0 } },
+            material,
         };
         material.onBeforeCompile = (shader) => {
             Object.assign(shader.uniforms, fx.u);
@@ -24,6 +30,7 @@ export default function build(ctx) {
 varying vec3 vFxPos;
 uniform float uRevealX; uniform float uSweepX; uniform float uSweepAmt; uniform float uEdge;
 uniform sampler2D uRaw;
+uniform sampler2D uContact; uniform vec4 uContactRect; uniform float uContactAmt;
 float fxFin;`)
                 // finished floor on the left of the line, raw concrete (matte, opaque: no mirror) on the right
                 .replace('#include <map_fragment>', `#include <map_fragment>
@@ -37,12 +44,26 @@ roughnessFactor = mix(0.9, roughnessFactor, fxFin);`)
                 .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
 float fxBand = exp(-pow((vFxPos.x - uSweepX) / 0.5, 2.0));
 float fxEdgeLine = exp(-pow((vFxPos.x - uRevealX) / 0.12, 2.0));
-totalEmissiveRadiance += vec3(1.0, 0.86, 0.66) * (fxBand * uSweepAmt * 0.35 * fxFin + fxEdgeLine * uEdge * 0.8);`);
+totalEmissiveRadiance += vec3(1.0, 0.86, 0.66) * (fxBand * uSweepAmt * 0.35 * fxFin + fxEdgeLine * uEdge * 0.8);`)
+                // contact shadow: darkens the floor and hides the mirror under it
+                .replace('#include <opaque_fragment>', `#include <opaque_fragment>
+float fxContact = texture2D(uContact, (vFxPos.xz - uContactRect.xy) * uContactRect.zw).r * uContactAmt;
+gl_FragColor.rgb *= 1.0 - fxContact;
+gl_FragColor.a = mix(gl_FragColor.a, 1.0, fxContact);`);
         };
         material.customProgramCacheKey = () => 'floorFx';
         material.needsUpdate = true;
         list.push(fx);
         return fx;
+    };
+
+    // texture: the blurred image; rect: { x0, z0, w, d } it covers in world metres; amount: 0..1
+    ctx.setFloorContact = (material, texture, { x0, z0, w, d }, amount) => {
+        list.filter((fx) => fx.material === material).forEach((fx) => {
+            fx.u.uContact.value = texture;
+            fx.u.uContactRect.value.set(x0, z0, 1 / w, 1 / d);
+            fx.u.uContactAmt.value = amount;
+        });
     };
 
     ctx.updateFloorFx = () => {
